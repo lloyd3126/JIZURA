@@ -28943,6 +28943,22 @@ J.randomOk = (project, g, k) => {
   'use strict';
   const titles = {
     layout: {
+      center:'置中排版', mixed:'大小混排', scatter:'錯落排字', ring:'環形文字', wave:'波形軌跡',
+      circle:'圓形視窗', condensed:'直向壓縮', type:'逐字排版', title:'標題卡', interlude:'間奏段落',
+      staircase:'階梯排列', zigzag:'鋸齒排列', spiral:'螺旋排版', justified:'網格版面', bubble:'對話泡泡',
+      ticker:'跑馬字幕', splitScreen:'上下分割', mirror:'鏡像排版', perspective:'透視排版', filmstrip:'底片框',
+      quote:'引文版面', searchBar:'搜尋欄', chat:'聊天訊息', notification:'通知卡片', ticket:'票券版面',
+      hanging:'懸掛文字', orbit:'環繞排版', tunnel:'隧道文字', wordCloud:'文字雲', elastic:'彈性文字',
+      neon:'霓虹字', keycaps:'鍵帽文字', bubbles:'泡泡文字', slotMachine:'拉霸字輪', flipBoard:'翻牌看板',
+      zoomRepeat:'連續放大', splitHalves:'上下對開', dotMatrix:'點陣顯示', depthStack:'景深堆疊',
+      contents:'目錄', footnote:'註腳', numbered:'編號清單', poster:'海報排版', swissGrid:'瑞士網格',
+      dictionary:'字典條目', newspaper:'報紙版面', cassette:'卡帶', polaroid:'拍立得相框', postcard:'明信片',
+      letterPaper:'信箋', calendar:'月曆', routeMap:'路線圖', stationSign:'站名牌', warningLabel:'警告標籤',
+      priceTag:'價格標籤', nameTag:'名牌', stickyNotes:'便利貼', cube:'立方體', cylinder:'圓柱體',
+      accordion:'手風琴摺頁', flag:'旗幟', ribbon:'緞帶', pendulum:'鐘擺', blocks:'積木', magnets:'磁鐵',
+      billboard:'看板', crossword:'填字遊戲', puzzle:'拼圖', dominoes:'骨牌', burst:'爆散文字', origami:'摺紙',
+      zipper:'拉鍊', glitchGrid:'故障格線', mosaicTiles:'馬賽克拼貼', contour:'等高線', stencil:'模板字',
+      pill:'膠囊框', curtain:'布幕排版', equalizer:'等化器排版', tape:'膠帶排版',
       vcols:'直排文字', marquee:'跑馬燈', tile:'文字拼貼', huge:'超大文字', gloss:'註解版面', diag:'斜向色帶',
       stack:'殘影堆疊', lowerThird:'下三分之一字幕', corners:'對角排版', arcTop:'彩虹弧形', gridCells:'網格方格',
       dropCap:'首字放大', frameBox:'相框', subtitleBar:'字幕條', sideways:'側向文字', edgeFrame:'邊框排版',
@@ -28957,6 +28973,11 @@ J.randomOk = (project, g, k) => {
       sliceStack:'切片堆疊', maskReveal:'文字窗格', halftoneBig:'超大網點文字'
     },
     enter: {
+      cut:'直接切入', slice:'切片滑入', type:'逐字打出', pop:'彈跳進場', drop:'落下進場', stretch:'伸展進場',
+      wipe:'擦拭揭示', blur:'模糊淡入', spin:'旋轉進場', flicker:'閃爍顯現', scramble:'亂碼還原', zoom:'縮放進場',
+      domino:'骨牌翻入', openFold:'摺頁展開', unroll:'捲軸展開', shutter:'百葉揭示', irisOpen:'光圈開啟',
+      checker:'棋盤格揭示', rubber:'彈性拉伸', glitch:'故障顯現', magnet:'磁吸聚合', skew:'斜切扭入', decode:'解碼顯現',
+      smear:'墨跡暈開', neonOn:'霓虹亮起', stamp:'蓋章顯現',
       assemble:'碎片組合', riseMask:'由下揭示', dropMask:'由上揭示', slideL:'由左滑入', slideR:'由右滑入',
       slideWhole:'整體滑入', flipX:'垂直翻轉', flipY:'水平翻轉', strokeDraw:'描邊後填色', outlineFill:'描邊轉填色',
       splitJoin:'上下合併', vSlice:'垂直切片', diagWipe:'斜向擦入', randomOrder:'文字隨機依序出現', bounceBig:'大幅彈跳',
@@ -28968,6 +28989,7 @@ J.randomOk = (project, g, k) => {
       strokeOrder:'逐筆書寫', shadowFirst:'先現出陰影', tokoroten:'擠出字條'
     },
     hold: {
+      jitter:'抖動', drift:'漂移', wave:'波浪擺動',
       still:'靜止', breathe:'呼吸', glitchtick:'故障閃動', colorRun:'流動色彩', trackBreathe:'字距呼吸',
       beatHop:'隨節拍跳動', hWave:'水平波動', orbitSmall:'小幅環繞', scanBand:'掃描光帶', noiseDrift:'雜訊飄移',
       zoomSlow:'緩慢推近', stretchPulse:'隨節拍伸縮', glitchJump:'偶發故障跳動', echoTrail:'殘影軌跡', glowFlicker:'光暈閃爍',
@@ -28975,7 +28997,10 @@ J.randomOk = (project, g, k) => {
       shadowSway:'陰影搖曳', typeRattle:'打字機震動', focusRack:'焦點轉移', pluckString:'撥弦震動'
     },
     exit: {
-      fall:'碎裂落下', drift:'飄散', sinkMask:'向下消失', riseOut:'向上離場', slideOutL:'向左滑出', slideOutR:'向右滑出',
+      cut:'直接切出', explode:'爆裂散開', fall:'崩落', drift:'霧化散去', slice:'切片退場', wipe:'擦拭離場',
+      shrink:'縮小消失', blur:'模糊淡出', stretch:'拉伸離場', scatter:'四散飛出', glitch:'故障消失',
+      popBurst:'彈裂散開', popOut:'彈散離場', burst:'爆散離場',
+      sinkMask:'向下消失', riseOut:'向上離場', slideOutL:'向左滑出', slideOutR:'向右滑出',
       flipOutX:'雙門闔上', flipOutY:'向下翻落', trackOutWide:'字距擴散', collapse:'向內收縮', zoomThrough:'放大穿越',
       zoomFar:'遠離消失', spinOut:'旋轉離場', blurOutStagger:'文字依序模糊', undraw:'退回描邊', outlineOut:'填色淡出成描邊',
       irisClose:'光圈閉合', splitApart:'上下分離', vSliceDrop:'垂直切片落下', dissolve:'碎裂消散', scrambleOut:'變成符號',
@@ -28992,7 +29017,7 @@ J.randomOk = (project, g, k) => {
       counter:'大型數字', cropMarks:'裁切標記', indexNum:'序號', dateStamp:'拍攝日期戳', qrBlock:'QR 風格方塊',
       guides:'輔助線', checkerStrip:'棋盤格色帶', beatRing:'節拍圓環', speedCorner:'速度線', risingParticles:'上升粒子',
       brushStroke:'筆刷筆觸', tapePieces:'紙膠帶', scribbleUnder:'手繪底線', crossOut:'編輯標記', watermarkKanji:'大型浮水印字',
-      verticalStrip:'直排文字條', romajiLine:'羅馬字行', bracketsJP:'日式括號', seal:'朱紅印章', kamon:'家徽',
+      verticalStrip:'直排文字條', romajiLine:'羅馬字行', bracketsJP:'日式括號', seal:'朱紅印章', kamon:'家徽', petals:'花瓣',
       seigaiha:'青海波紋', asanoha:'麻葉紋', hanabi:'煙火', chochin:'紙燈籠', shimenawa:'注連繩', sensu:'摺扇',
       tsukiKumo:'明月與雲', momiji:'楓葉', namiGashira:'浪花', kasumi:'薄霧', registration:'套印標記',
       ruledLines:'筆記本橫線', indexTabs:'索引標籤', moonPhases:'月相', dandelion:'蒲公英種子', tally:'計數刻痕',
