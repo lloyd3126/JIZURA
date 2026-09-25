@@ -2,7 +2,7 @@
 
 가사를 입력하면 브라우저에서 리릭 모션 영상을 자동으로 구성하고 MP4로 내보낼 수 있습니다. JIZURA는 레이아웃, 등장, 유지, 퇴장, 장식, 글자 효과, 배경, 카메라, 화면 효과, 전환을 조합하며, 시드를 바꾸거나 **자동으로 만들기**를 누르면 다른 구성을 만들 수 있습니다.
 
-**[한국어판 열기](https://852wa.github.io/JIZURA/ko/)** · [日本語版](https://852wa.github.io/JIZURA/) · [English](https://852wa.github.io/JIZURA/en/) · [일본어 가이드](README.md)
+**이 fork의 브라우저 버전:** [번체 중국어](https://lloyd3126.github.io/JIZURA/) · [일본어](https://lloyd3126.github.io/JIZURA/ja/) · [일본어 가이드](README.md)
 
 한국어·영어·일본어 브라우저판은 같은 프로젝트 형식과 브라우저 저장 데이터를 사용합니다. 편집기 상단의 언어 링크로 UI 언어를 바꿔도 가사와 설정은 그대로 유지됩니다.
 
@@ -38,6 +38,6 @@
 
 저장소 루트에서 python3 build.py 를 실행합니다.
 
-index.html, en/index.html, ko/index.html이 생성됩니다. 세 파일은 GitHub Pages에서 각각 일본어, 영어, 한국어판으로 사용할 수 있는 단일 HTML 파일입니다.
+이 fork에서는 `index.html`에 번체 중국어판, `ja/index.html`에 일본어판을 생성합니다. `/zh-hant/`와 `/zh-TW/`는 루트 번체 중국어 페이지의 호환 경로입니다. 영어·간체 중국어·한국어·인도네시아어 브라우저판은 생성하지 않습니다.
 
 한국어판은 브라우저 UI 번역만 추가합니다. After Effects 패널의 프로젝트 JSON 형식은 기존과 동일하며, 가사의 한국어 감지와 한국어 글꼴 매핑은 기존 엔진을 그대로 사용합니다.
