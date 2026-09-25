@@ -3,7 +3,6 @@ usage: python3 build.py            -> standalone edition pages for GitHub Pages
        python3 build.py --dev      -> also dev/www/jizura.js + dev/www/test.html for test tools
        JIZURA_SITE_URL=https://example.github.io/JIZURA python3 build.py
                                     -> set canonical / social URLs for this fork
-The old /zh-TW/ and upstream /zh-hant/ URLs stay as compatibility copies of the root Traditional Chinese page.
 The root is Traditional Chinese; Japanese is published at /ja/."""
 import glob, os, sys
 from app import i18n
@@ -13,7 +12,7 @@ read = lambda p: open(p, encoding='utf-8').read()
 sources = sorted(glob.glob('src/*.js'))
 js = '\n'.join(read(f) for f in sources)
 mux = '/*! mp4-muxer v5.2.2 | MIT License | (c) 2023 Vanilagy | see THIRD_PARTY_NOTICES.md */\n' + read('vendor/mp4-muxer.min.js')
-def build(lang, target_override=None):
+def build(lang):
     local = lang in i18n.MODULES
     m = i18n.module(lang) if local else None
     title = m.TITLE if local else 'JIZURA 字面'
@@ -62,7 +61,7 @@ def build(lang, target_override=None):
 </body>
 </html>
 '''
-    target = target_override or ((folder + '/' if folder else '') + 'index.html')
+    target = (folder + '/' if folder else '') + 'index.html'
     os.makedirs(os.path.dirname(target) or '.', exist_ok=True)
     open(target, 'w', encoding='utf-8').write(html)
     print(target, len(html), 'bytes')
@@ -70,8 +69,6 @@ for code, _, _, _ in i18n.EDITIONS:
     if code in i18n.MODULES and not i18n.has_module(code):
         print('skip', code, '(no translation module yet)'); continue
     build(code)
-build('zh-Hant', target_override='zh-hant/index.html')
-build('zh-Hant', target_override='zh-TW/index.html')
 if '--dev' in sys.argv:
     os.makedirs('dev/www', exist_ok=True)
     open('dev/www/jizura.js', 'w', encoding='utf-8').write(js)

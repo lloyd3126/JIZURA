@@ -25,6 +25,6 @@ Gunakan **Simpan** dan **Buka** untuk proyek `.jizura.json`. **Ekspor untuk AE**
 
 ## Build dan publikasi
 
-Jalankan `python3 build.py` dari root repository. Fork ini membuat halaman Traditional Chinese di `/` dan halaman Jepang di `/ja/`, serta salinan kompatibilitas di `/zh-hant/` dan `/zh-TW/`. Edisi browser Inggris, Simplified Chinese, Korea, dan Indonesia tidak dibangun. Panel After Effects dan CEP berbahasa Inggris tetap dapat dibuat dengan `python3 build_ae.py --lang en` dan `python3 build_cep.py --lang en --out dist`. File HTML dapat dibuka langsung secara lokal untuk penggunaan offline.
+Jalankan `python3 build.py` dari root repository. Fork ini hanya membuat halaman Traditional Chinese di `/` dan halaman Jepang di `/ja/`. Edisi browser Inggris, Simplified Chinese, Korea, dan Indonesia tidak dibangun. Panel After Effects dan CEP berbahasa Inggris tetap dapat dibuat dengan `python3 build_ae.py --lang en` dan `python3 build_cep.py --lang en --out dist`. File HTML dapat dibuka langsung secara lokal untuk penggunaan offline.
 
 Panel After Effects memerlukan After Effects untuk memverifikasi gerakan dan hasil ekspor; pengujian otomatis memakai mock AE.
