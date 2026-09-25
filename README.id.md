@@ -4,7 +4,7 @@ Buat video lirik bergerak langsung di browser. JIZURA menggabungkan layout, anim
 
 **Edisi browser fork ini:** [繁體中文](https://lloyd3126.github.io/JIZURA/) · [日本語](https://lloyd3126.github.io/JIZURA/ja/) · [English guide](README.en.md) · [日本語ガイド](README.md)
 
-Edisi Indonesia dan Jepang memakai format proyek serta data browser yang sama. Gunakan menu bahasa di bagian atas editor untuk berpindah edisi tanpa mengubah lirik atau pengaturan.
+Halaman Traditional Chinese di `/` dan halaman Jepang di `/ja/` memakai format proyek serta data browser yang sama. Tidak ada menu pergantian bahasa di dalam aplikasi.
 
 ## Mulai cepat
 
@@ -21,10 +21,8 @@ Penggeser volume di sebelah tombol putar hanya mengatur volume pratinjau; video 
 
 **Sintaks lirik:** `[interlude 8]` menambahkan bagian instrumental 8 detik dengan latar dan dekorasi saja (4 detik jika angka dihilangkan); `I remember/the dawn` membuat cut manual; `*kata*` memberi penekanan; `!` di akhir menambahkan flash dan goyangan; `lirik|catatan` menambahkan teks anotasi kecil; `[01:23.45]lirik` memakai timestamp LRC; baris yang diawali `#` diabaikan sebagai komentar.
 
-Gunakan **Simpan** dan **Buka** untuk proyek `.jizura.json`. **Ekspor untuk AE** membuat data susunan yang bisa diimpor ke panel After Effects. Video dan gambar yang dibuat menjadi milik pembuatnya; hak atas musik dan lirik tetap berada pada pemegang hak masing-masing. File proyek, lirik, dan audio diproses di browser. Google Fonts dimuat sesuai kebutuhan. Aplikasi ini dirilis di bawah lisensi MIT; lihat [LICENSE](LICENSE) dan [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Gunakan **Simpan** dan **Buka** untuk proyek `.jizura.json`. Video dan gambar yang dibuat menjadi milik pembuatnya; hak atas musik dan lirik tetap berada pada pemegang hak masing-masing. File proyek, lirik, dan audio diproses di browser. Google Fonts dimuat sesuai kebutuhan. Aplikasi ini dirilis di bawah lisensi MIT; lihat [LICENSE](LICENSE) dan [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Build dan publikasi
 
-Jalankan `python3 build.py` dari root repository. Fork ini hanya membuat halaman Traditional Chinese di `/` dan halaman Jepang di `/ja/`. Edisi browser Inggris, Simplified Chinese, Korea, dan Indonesia tidak dibangun. Panel After Effects dan CEP berbahasa Inggris tetap dapat dibuat dengan `python3 build_ae.py --lang en` dan `python3 build_cep.py --lang en --out dist`. File HTML dapat dibuka langsung secara lokal untuk penggunaan offline.
-
-Panel After Effects memerlukan After Effects untuk memverifikasi gerakan dan hasil ekspor; pengujian otomatis memakai mock AE.
+Jalankan `python3 build.py` dari root repository. Fork ini membuat halaman Traditional Chinese di `/` dan halaman Jepang di `/ja/`; UI browser bahasa lainnya tidak dibuat. File HTML dapat dibuka langsung secara lokal untuk penggunaan offline.

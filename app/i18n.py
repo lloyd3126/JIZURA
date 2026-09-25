@@ -59,7 +59,7 @@ def localize_js(code, source, filename):
 
 
 def names_js(code):
-    """styles / moods / sample lyrics in the edition's language (after app/english.js, which names the parts)"""
+    """styles / moods / sample lyrics in the edition's language."""
     m = module(code)
     return ('(() => {\n  const S = ' + json.dumps({k: list(v) for k, v in m.STYLES.items()}, ensure_ascii=False) + ';\n'
             '  for (const [k, [n, d]] of Object.entries(S)) if (J.STYLES[k]) { J.STYLES[k].name = n; J.STYLES[k].desc = d; }\n'

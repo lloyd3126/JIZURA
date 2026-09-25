@@ -378,7 +378,6 @@ button.small.primary { padding: 4px 12px; }
     <div class="acts">
       <label class="file" title="保存したプロジェクト(.json)を開く">開く<input id="fileProject" type="file" accept=".json,application/json"></label>
       <button id="btnSave" title="プロジェクトを .json で保存">保存</button>
-      <button id="btnAE" title="After Effects パネル用の構成データを書き出す">AE用に書き出し</button>
       <button id="btnReset" class="ghost" title="歌詞・曲・設定・履歴をすべて消して、最初の状態に戻します">初期化</button>
       <button id="btnTerms" class="ghost terms-open" title="出力物の権利とライセンス">利用について</button>
     </div>
@@ -2333,7 +2332,7 @@ J.taggedWith = (group, mood) => J.order(group).filter(k => { const d = J.registr
 
 /* ============================================================
    JIZURA — layouts (how a chunk of lyric is composed on screen)
-   plan(rng, cut, st)  -> params stored in the cut (also exported to AE)
+   plan(rng, cut, st)  -> params stored in the cut
    render(env)         -> draws; returns bbox of the main text for decor
    ============================================================ */
 (() => {
@@ -3283,9 +3282,6 @@ J.defaultProject = () => ({
   colors: { enabled: false },
   fonts: {},
 });
-
-/* the original (After Effects-implemented) sets, captured before any expression pack registers */
-J.CORE_ORDER = { layout: J.LAYOUT_ORDER.slice(), enter: J.ENTER_ORDER.slice(), exit: J.EXIT_ORDER.slice(), hold: J.HOLD_ORDER.slice(), decor: J.DECOR_ORDER.slice() };
 
 /* animation step length: 'koma' = drawings per second on a 24fps timebase (12 = on twos, 8 = on threes, 0 = every output frame) */
 J.komaOf = fx => (fx.koma != null ? +fx.koma : (fx.onTwos === false ? 0 : 12));
@@ -5194,48 +5190,6 @@ J.exportPNGZip = async ({ plan, project, transparent, layers, onProgress, signal
   return zip.finish();
 };
 
-/* ---------- plan JSON for the After Effects panel ---------- */
-/* The After Effects panel implements the original expression set. Newer pack entries are exported as their
-   closest original counterpart (the browser key is kept in web* fields so nothing is lost). */
-J.AE_MAP = {
-  layout: { lowerThird: 'center', corners: 'mixed', staircase: 'mixed', zigzag: 'wave', arcTop: 'ring', spiral: 'ring', gridCells: 'labels', dropCap: 'mixed', justified: 'tile', frameBox: 'center', bubble: 'pill', subtitleBar: 'center', ticker: 'marquee', splitScreen: 'diag', mirror: 'stack', sideways: 'vcols', edgeFrame: 'marquee', perspective: 'stack', hanko: 'vcols', genkou: 'vcols', panels: 'diag', filmstrip: 'labels', quote: 'center', ruler: 'gloss', searchBar: 'type', chat: 'labels', notification: 'pill', ticket: 'pill',
-    rain: 'tile', hanging: 'scatter', orbit: 'ring', tunnel: 'tile', wordCloud: 'scatter', bounceLine: 'mixed', elastic: 'condensed', crossBands: 'diag', stickerBomb: 'labels', neon: 'center', keycaps: 'labels', bubbles: 'scatter', slotMachine: 'labels', flipBoard: 'labels', credits: 'type', zoomRepeat: 'stack', splitHalves: 'stack', columnsBig: 'vcols', circleWords: 'ring', dotMatrix: 'type', depthStack: 'stack', typeSpecimen: 'stack', kanjiFocus: 'huge', halfVertical: 'vcols', curtain: 'center', equalizer: 'mixed', tape: 'diag' },
-  enter: { riseMask: 'drop', dropMask: 'drop', slideL: 'wipe', slideR: 'wipe', slideWhole: 'stretch', flipX: 'spin', flipY: 'spin', domino: 'spin', fold: 'pop', unroll: 'wipe', strokeDraw: 'assemble', outlineFill: 'blur', splitJoin: 'slice', vSlice: 'slice', shutter: 'wipe', iris: 'zoom', diagWipe: 'wipe', blinds: 'slice', checker: 'flicker', randomOrder: 'flicker', bounceBig: 'drop', squashDrop: 'drop', rubber: 'stretch', glitchIn: 'scramble', echoIn: 'zoom', whip: 'stretch', skewIn: 'stretch', trackIn: 'blur', trackOut: 'blur', blurStagger: 'blur', fadeStagger: 'blur', waveIn: 'pop', spiralIn: 'spin', zoomOut: 'zoom', resolve: 'scramble', magnet: 'assemble', inkBleed: 'blur', neonOn: 'flicker', cursorSweep: 'type', stamp: 'zoom' },
-  exit: { sinkMask: 'fall', riseOut: 'drift', slideOutL: 'stretch', slideOutR: 'stretch', flipOutX: 'shrink', flipOutY: 'fall', foldOut: 'shrink', squash: 'shrink', trackOutWide: 'blur', collapse: 'shrink', zoomThrough: 'blur', zoomFar: 'shrink', spinOut: 'scatter', twist: 'shrink', waveOut: 'scatter', blurOutStagger: 'blur', undraw: 'blur', outlineOut: 'blur', irisClose: 'shrink', diagWipeOut: 'wipe', blindsClose: 'slice', checkerOut: 'glitch', splitApart: 'slice', vSliceDrop: 'fall', melt: 'fall', dissolve: 'drift', backspace: 'wipe', scrambleOut: 'glitch', glitchDissolve: 'glitch', echoOut: 'blur', whipOut: 'stretch', gravity: 'fall', popOut: 'scatter', burn: 'drift', sweepCover: 'wipe', shatterLite: 'explode' },
-  hold: { float: 'drift', sway: 'wave', pulse: 'breathe', shimmer: 'still', colorRun: 'still', rotateSlow: 'drift', trackBreathe: 'breathe', skewWobble: 'wave', beatHop: 'wave', hWave: 'wave', heartbeat: 'breathe', orbitSmall: 'jitter', jelly: 'breathe', scanBand: 'glitchtick', noiseDrift: 'drift', tilt: 'drift', zoomSlow: 'drift', stretchPulse: 'breathe', glitchJump: 'glitchtick', echoTrail: 'drift' },
-  decor: { crosshair: 'brackets', cropMarks: 'brackets', reticle: 'rings', radar: 'rings', progressRing: 'rings', timecodeBar: 'barcode', rulerEdge: 'grid', dimension: 'leaders', indexNum: 'counter', dateStamp: 'barcode', qrBlock: 'barcode', glitchRects: 'bars', concentricSquares: 'shapes', triangleSpin: 'shapes', lineBurst: 'sparks', plusGrid: 'grid', guides: 'grid', waveLine: 'waveform', spiralLine: 'rings', halftonePatch: 'shapes', checkerStrip: 'stripes', beatRing: 'rings', orbitDots: 'dots', constellation: 'sparks', confetti: 'shapes', petals: 'shapes', rainStreaks: 'slash', snow: 'dots', lightLeak: 'blobs', bokeh: 'blobs', speedCorner: 'slash', risingParticles: 'sparks', twinkle: 'sparks', brushStroke: 'bars', tapePieces: 'bars', scribbleCircle: 'rings', scribbleUnder: 'slash', crossOut: 'slash', highlightMark: 'bars', heartsStars: 'shapes', watermarkKanji: 'counter', verticalStrip: 'leaders', romajiLine: 'leaders', bracketsJP: 'brackets', seal: 'shapes' },
-  fx: { rgbSplit: 'chroma', smear: 'slice', vhsRoll: 'slice', trackingNoise: 'slice', waveWarp: 'slice', pixelDrift: 'slice', tileShift: 'block', gridRepeat: 'block', mirrorFlash: 'block', strobe: 'invert', blackFrame: 'invert', whiteFrame: 'flash', filmBurn: 'flash', lightSweep: 'flash', panelWipe: 'flash', zoomPunch: 'zoom', whipBlur: 'zoom', posterize: 'mosaic', hueShift: 'chroma', irisTrans: 'zoom', doors: 'slice', blindsTrans: 'slice', splitSlide: 'slice', crtOff: 'flash' },
-};
-// The plan goes to the After Effects panel as-is (version 2): the panel builds every key it implements and
-// picks the closest counterpart itself (from the exported metadata / J.AE_MAP) for anything it lacks.
-J.planForAE = (plan, project, range) => {
-  const clean = JSON.parse(JSON.stringify(plan, (k, v) => (k === 'energy' || k === 'buffer' || k === 'peaks' ? undefined : v)));
-  clean.version = 2;
-  clean.width = J.outputSize(project)[0]; clean.height = J.outputSize(project)[1];
-  clean.extra = project.extra === true; clean.wa = project.wa !== false;
-  clean.fonts = {};
-  for (const [role, keys] of Object.entries(plan.style.fonts)) clean.fonts[role] = keys.map(k => J.FONTS[k] ? J.FONTS[k].label : k);
-  clean.fontTable = Object.fromEntries(Object.entries(J.FONTS).map(([k, f]) => [k, { label: f.label, family: f.family.replace(/"/g, ''), weight: f.weight, kind: f.kind }]));
-  // lyric language: the face each key is drawn with in the browser for this plan (the panel maps keys → AE fonts per language)
-  clean.lang = plan.lang || 'ja';
-  if (J.setLang && J.faceOf && clean.lang !== 'ja') {
-    J.setLang(clean.lang);
-    for (const k of Object.keys(clean.fontTable)) { const f = J.faceOf(k); clean.fontTable[k].langFamily = f.family.replace(/"/g, ''); clean.fontTable[k].langWeight = f.weight; }
-  }
-  // モーフ has no After Effects counterpart yet: build it as the closest transition (an ink-blob dissolve)
-  for (const c of clean.cuts || []) if (c.morph && !c.trans) { c.trans = 'inkBlob'; c.transDur = c.morph.dur; c.transP = {}; c.webMorph = true; }
-  // 行の範囲だけ: keep the cuts / events inside [t0, t1] and move them to start at 0.
-  // audioOffset tells the AE panel to slide the song layer left by t0 so it stays in sync.
-  if (range) {
-    const sp = J.exportSpan(plan, range), t0 = sp.t0, t1 = t0 + sp.dur, eps = 1e-3;
-    const sh = o => { o.start -= t0; o.end -= t0; return o; };
-    clean.cuts = clean.cuts.filter(c => c.end > t0 + eps && c.start < t1 - eps).map(c => { if (c.companion) sh(c.companion); return sh(c); });
-    clean.events = (clean.events || []).filter(e => e.t >= t0 - 1 && e.t < t1).map(e => Object.assign(e, { t: e.t - t0 }));
-    for (const l of clean.lines || []) { sh(l); if (l.visEnd != null) l.visEnd -= t0; }   // all lines stay (cut.line indexes them)
-    clean.duration = sp.dur; clean.audioOffset = t0; clean.range = { t0, t1 };
-  }
-  return clean;
-};
 })();
 
 /* JIZURA pack: bgcamB — background graphics (gradients, wa / textile patterns, scenes, textures) + camera moves */
@@ -8463,7 +8417,7 @@ function kamonPaths(kind) {            // unit-radius motif paths (closed polyli
   return out;
 }
 DEF.kamon = {
-  name: '家紋', tags: ['editorial', 'calm', 'emotional'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: '家紋', tags: ['editorial', 'calm', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -8490,7 +8444,7 @@ DEF.kamon = {
 
 /* 青海波 — overlapping concentric-arc waves spreading from a screen corner, under the lyric */
 DEF.seigaiha = {
-  name: '青海波', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true, ae: 'grid',
+  name: '青海波', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env);
@@ -8524,7 +8478,7 @@ DEF.seigaiha = {
 
 /* 麻の葉 — the hemp-leaf lattice seen through a round (or square) window that irises open behind the lyric */
 DEF.asanoha = {
-  name: '麻の葉', tags: ['calm', 'editorial', 'emotional'], w: 0.8, layer: 'back', subtle: true, ae: 'grid',
+  name: '麻の葉', tags: ['calm', 'editorial', 'emotional'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc, ctx } = env, u = U(env);
@@ -8565,7 +8519,7 @@ DEF.asanoha = {
 
 /* 花火 — firework shells bursting in the free space around the lyric (chrysanthemum trails, peony stars or drooping willow) */
 DEF.hanabi = {
-  name: '花火', tags: ['emotional', 'pop', 'calm'], w: 0.8, layer: 'front', ae: 'sparks',
+  name: '花火', tags: ['emotional', 'pop', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -8620,7 +8574,7 @@ DEF.hanabi = {
 
 /* 提灯 — paper lanterns dropping in on strings from the top edge, swinging, each bearing a character of the lyric */
 DEF.chochin = {
-  name: '提灯', tags: ['emotional', 'pop', 'calm'], w: 0.7, layer: 'front', ae: 'shapes',
+  name: '提灯', tags: ['emotional', 'pop', 'calm'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env), m = MG(env);
@@ -8672,7 +8626,7 @@ DEF.chochin = {
 
 /* 注連縄 — a twisted sacred rope sagging across the free band, with zigzag shide papers and straw tassels */
 DEF.shimenawa = {
-  name: '注連縄', tags: ['editorial', 'emotional', 'calm'], w: 0.6, layer: 'front', ae: 'leaders',
+  name: '注連縄', tags: ['editorial', 'emotional', 'calm'], w: 0.6, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env), m = MG(env);
@@ -8726,7 +8680,7 @@ DEF.shimenawa = {
 
 /* 扇 — a folding fan that opens with pleated ribs (plain, with a red sun, or with painted wave bands) and folds shut on exit */
 DEF.sensu = {
-  name: '扇', tags: ['emotional', 'editorial', 'calm'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: '扇', tags: ['emotional', 'editorial', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -8778,7 +8732,7 @@ function kumo(x0, yb, L, hc) {             // stylised cloud outline: bumpy top,
   return { outline: top.concat([[x0 + L, yb], [x0, yb]]), curl };
 }
 DEF.tsukiKumo = {
-  name: '月に雲', tags: ['emotional', 'calm', 'editorial'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: '月に雲', tags: ['emotional', 'calm', 'editorial'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -8829,7 +8783,7 @@ const MAPLE = (() => {
   return pts;
 })();
 DEF.momiji = {
-  name: '紅葉', tags: ['emotional', 'calm'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: '紅葉', tags: ['emotional', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env);
@@ -8867,7 +8821,7 @@ function waveCrest(x, yb, w, h) {
   return { crest: back.concat(curl), face, inner, top: [x + r0 * 0.9, yb - h] };
 }
 DEF.namiGashira = {
-  name: '波頭', tags: ['emotional', 'editorial', 'graphic'], w: 0.8, layer: 'front', ae: 'waveform',
+  name: '波頭', tags: ['emotional', 'editorial', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -8896,7 +8850,7 @@ DEF.namiGashira = {
 
 /* 霞 — layered suyari-gasumi mist bands (rounded stepped bars) drifting behind the lyric, edged with a gold hairline */
 DEF.kasumi = {
-  name: '霞', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true, ae: 'bars',
+  name: '霞', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc, ctx } = env, u = U(env);
@@ -8931,7 +8885,7 @@ DEF.kasumi = {
 
 /* 六角格子 — a honeycomb patch whose cells ripple in, with a scan band and a few lit cells */
 DEF.hexGrid = {
-  name: '六角格子', tags: ['glitch', 'graphic'], w: 0.9, layer: 'front', ae: 'grid',
+  name: '六角格子', tags: ['glitch', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -8970,7 +8924,7 @@ DEF.hexGrid = {
 
 /* 円形スペクトラム — a radial spectrum analyser: mirrored bars around a small ring, with falling peak dots */
 DEF.spectrumRing = {
-  name: '円形スペクトラム', tags: ['glitch', 'pop', 'graphic'], w: 0.9, layer: 'front', ae: 'waveform',
+  name: '円形スペクトラム', tags: ['glitch', 'pop', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -9006,7 +8960,7 @@ DEF.spectrumRing = {
 
 /* データ列 — a small memory-dump panel: address / bytes / code-point rows scrolling up, newest row flagged */
 DEF.dataColumns = {
-  name: 'データ列', tags: ['glitch', 'editorial', 'graphic'], w: 0.9, layer: 'front', ae: 'barcode',
+  name: 'データ列', tags: ['glitch', 'editorial', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -9043,7 +8997,7 @@ DEF.dataColumns = {
 
 /* 読み込み — a loading spinner (segments, twin arcs or orbiting dots) that resolves into a check mark */
 DEF.spinner = {
-  name: '読み込み', tags: ['glitch', 'pop', 'graphic'], w: 0.8, layer: 'front', ae: 'rings',
+  name: '読み込み', tags: ['glitch', 'pop', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -9090,7 +9044,7 @@ DEF.spinner = {
 
 /* 方位テープ — a scrolling compass heading tape with a fixed pointer and a boxed readout */
 DEF.headingTape = {
-  name: '方位テープ', tags: ['glitch', 'graphic', 'editorial'], w: 0.9, layer: 'front', ae: 'grid',
+  name: '方位テープ', tags: ['glitch', 'graphic', 'editorial'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9134,7 +9088,7 @@ DEF.headingTape = {
 
 /* 文字ロック — HUD lock-on corners that hop from glyph to glyph along the lyric's outer edge, leaving index ticks */
 DEF.glyphLock = {
-  name: '文字ロック', tags: ['glitch', 'graphic', 'editorial'], w: 0.9, layer: 'front', ae: 'brackets',
+  name: '文字ロック', tags: ['glitch', 'graphic', 'editorial'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9193,7 +9147,7 @@ DEF.glyphLock = {
 
 /* 原子軌道 — three tilted orbit ellipses round a small nucleus, electrons passing in front of / behind it */
 DEF.atomOrbit = {
-  name: '原子軌道', tags: ['graphic', 'glitch', 'calm'], w: 0.8, layer: 'front', ae: 'rings',
+  name: '原子軌道', tags: ['graphic', 'glitch', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -9231,7 +9185,7 @@ DEF.atomOrbit = {
 
 /* 音波 — sound-wave arcs radiating outward from both sides of the lyric (above / below for vertical text), on the beat */
 DEF.sonarArcs = {
-  name: '音波', tags: ['pop', 'emotional', 'graphic'], w: 0.9, layer: 'front', ae: 'rings',
+  name: '音波', tags: ['pop', 'emotional', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9267,7 +9221,7 @@ DEF.sonarArcs = {
 
 /* 回路 — circuit-board traces routed with 45° bends from a screen edge toward the lyric, pads, vias and travelling pulses */
 DEF.circuit = {
-  name: '回路', tags: ['glitch', 'graphic'], w: 0.9, layer: 'front', ae: 'leaders',
+  name: '回路', tags: ['glitch', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env);
@@ -9318,7 +9272,7 @@ DEF.circuit = {
 
 /* 色見本 — a printer's colour-control strip built from the scheme: solids over 50 % tints, with codes and a register mark */
 DEF.swatches = {
-  name: '色見本', tags: ['editorial', 'graphic'], w: 0.9, layer: 'front', ae: 'bars',
+  name: '色見本', tags: ['editorial', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -9349,7 +9303,7 @@ DEF.swatches = {
 
 /* 罫線ノート — faint notebook rules drawn on across the screen behind the lyric, with a red margin line and a date header */
 DEF.ruledLines = {
-  name: '罫線ノート', tags: ['editorial', 'calm', 'emotional'], w: 0.8, layer: 'back', subtle: true, ae: 'grid',
+  name: '罫線ノート', tags: ['editorial', 'calm', 'emotional'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env);
@@ -9377,7 +9331,7 @@ DEF.ruledLines = {
 
 /* 見当合わせ — a registration target printed in three offset colours that slide into perfect register */
 DEF.registration = {
-  name: '見当合わせ', tags: ['editorial', 'graphic', 'glitch'], w: 0.8, layer: 'front', ae: 'brackets',
+  name: '見当合わせ', tags: ['editorial', 'graphic', 'glitch'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -9410,7 +9364,7 @@ DEF.registration = {
 
 /* パンチ穴 — binder punch holes along a free screen edge, punched in one by one, with reinforcement rings and a dimension */
 DEF.punchHoles = {
-  name: 'パンチ穴', tags: ['editorial', 'calm', 'graphic'], w: 0.7, layer: 'front', ae: 'dots',
+  name: 'パンチ穴', tags: ['editorial', 'calm', 'graphic'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9467,7 +9421,7 @@ function sheetCorner(env, X, Y, sx, sy, L, e, a) {
 
 /* ホチキス — the lyric treated as a stapled sheet: paper-corner lines, a dog-ear, and a staple that snaps in diagonally */
 DEF.staple = {
-  name: 'ホチキス', tags: ['editorial', 'pop', 'emotional'], w: 0.7, layer: 'front', ae: 'shapes',
+  name: 'ホチキス', tags: ['editorial', 'pop', 'emotional'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env), m = MG(env);
@@ -9512,7 +9466,7 @@ const CLIP = (() => {
   return p.map(([x, y]) => [x, y - 1.5]);                // centred vertically
 })();
 DEF.paperClip = {
-  name: 'クリップ', tags: ['editorial', 'pop', 'emotional'], w: 0.7, layer: 'front', ae: 'shapes',
+  name: 'クリップ', tags: ['editorial', 'pop', 'emotional'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9537,7 +9491,7 @@ DEF.paperClip = {
 
 /* 見出しタブ — binder index tabs sliding out of a free screen edge; the current line's tab sticks out in the accent */
 DEF.indexTabs = {
-  name: '見出しタブ', tags: ['editorial', 'pop', 'graphic'], w: 0.8, layer: 'front', ae: 'bars',
+  name: '見出しタブ', tags: ['editorial', 'pop', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env);
@@ -9584,7 +9538,7 @@ DEF.indexTabs = {
 
 /* 蔓 — a tendril growing in from a screen corner, sprouting leaves and curls, stopping short of the lyric */
 DEF.vines = {
-  name: '蔓', tags: ['emotional', 'calm', 'pop'], w: 0.8, layer: 'front', ae: 'leaders',
+  name: '蔓', tags: ['emotional', 'calm', 'pop'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env);
@@ -9656,7 +9610,7 @@ function cloudOutline(cx, by, Wc, seed) {
   return { runs, base: [[xl, by], [xr, by]], circles: cs };
 }
 DEF.cloudPuffs = {
-  name: '雲', tags: ['calm', 'pop', 'emotional'], w: 0.8, layer: 'front', ae: 'blobs',
+  name: '雲', tags: ['calm', 'pop', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, sc, ctx } = env, u = U(env);
@@ -9689,7 +9643,7 @@ DEF.cloudPuffs = {
 
 /* 星空 — a fine twinkling star field behind the lyric with an occasional shooting star */
 DEF.starField = {
-  name: '星空', tags: ['calm', 'emotional'], w: 0.8, layer: 'back', subtle: true, ae: 'dots',
+  name: '星空', tags: ['calm', 'emotional'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env);
@@ -9718,7 +9672,7 @@ DEF.starField = {
 /* 月齢 — a row of moon-phase icons (new → full → new) with the evening's phase ringed and named */
 const MOON_NAMES = ['新月', '三日月', '上弦', '十三夜', '満月', '居待月', '下弦', '有明'];
 DEF.moonPhases = {
-  name: '月齢', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'front', ae: 'dots',
+  name: '月齢', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9759,7 +9713,7 @@ DEF.moonPhases = {
 
 /* 陽射し — faint sunburst wedges slowly turning out of a corner (or the bottom edge), behind the lyric */
 DEF.sunRays = {
-  name: '陽射し', tags: ['emotional', 'pop', 'calm'], w: 0.8, layer: 'back', subtle: true, ae: 'stripes',
+  name: '陽射し', tags: ['emotional', 'pop', 'calm'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env);
@@ -9783,7 +9737,7 @@ DEF.sunRays = {
 
 /* 雨の波紋 — raindrops landing on a still "ground plane" in the lower screen: perspective ripple rings (under the lyric) */
 DEF.rainRipples = {
-  name: '雨の波紋', tags: ['calm', 'emotional'], w: 0.8, layer: 'back', subtle: true, ae: 'rings',
+  name: '雨の波紋', tags: ['calm', 'emotional'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env);
@@ -9810,7 +9764,7 @@ DEF.rainRipples = {
 
 /* シャボン玉 — soap bubbles rising and wobbling; bubbles that drift up under the lyric pop just before touching it */
 DEF.bubbles = {
-  name: 'シャボン玉', tags: ['pop', 'emotional', 'calm'], w: 0.8, layer: 'front', ae: 'dots',
+  name: 'シャボン玉', tags: ['pop', 'emotional', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9855,7 +9809,7 @@ DEF.bubbles = {
 
 /* 煙 — thin wisps of smoke curling upward (optionally from a stick of incense with a glowing tip), under the lyric */
 DEF.smoke = {
-  name: '煙', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true, ae: 'blobs',
+  name: '煙', tags: ['calm', 'emotional', 'editorial'], w: 0.8, layer: 'back', subtle: true,
   draw(env, bb, P) {
     if (env.pass !== 'main' || env.lt < 0) return;
     const { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9888,7 +9842,7 @@ DEF.smoke = {
 
 /* 綿毛 — dandelion seeds (stalk + umbrella of filaments) drifting on the wind, optionally shed from a puffball */
 DEF.dandelion = {
-  name: '綿毛', tags: ['calm', 'emotional'], w: 0.8, layer: 'front', ae: 'sparks',
+  name: '綿毛', tags: ['calm', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9933,7 +9887,7 @@ DEF.dandelion = {
 
 /* 蛍 — fireflies wandering around the lyric, glowing on and off with soft halos and faint trails */
 DEF.fireflies = {
-  name: '蛍', tags: ['emotional', 'calm'], w: 0.8, layer: 'front', ae: 'dots',
+  name: '蛍', tags: ['emotional', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -9969,7 +9923,7 @@ DEF.fireflies = {
 
 /* メンフィス — Memphis-style squiggles, zigzags, outlined triangles, dot grids and hatch strokes placed round the lyric */
 DEF.memphis = {
-  name: 'メンフィス', tags: ['pop', 'graphic'], w: 0.9, layer: 'front', ae: 'shapes',
+  name: 'メンフィス', tags: ['pop', 'graphic'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env);
@@ -10001,7 +9955,7 @@ DEF.memphis = {
 
 /* ジグザグリボン — an accordion-folded two-tone ribbon unfurling in from a screen corner */
 DEF.zigzagRibbon = {
-  name: 'ジグザグリボン', tags: ['pop', 'graphic'], w: 0.8, layer: 'front', ae: 'bars',
+  name: 'ジグザグリボン', tags: ['pop', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env);
@@ -10032,7 +9986,7 @@ DEF.zigzagRibbon = {
 
 /* 水玉 — a patch of polka dots whose sizes breathe in a travelling diagonal wave */
 DEF.polkaPatch = {
-  name: '水玉', tags: ['pop', 'graphic', 'calm'], w: 0.9, layer: 'front', ae: 'dots',
+  name: '水玉', tags: ['pop', 'graphic', 'calm'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10059,7 +10013,7 @@ DEF.polkaPatch = {
 
 /* 縞の円 — a disc filled with fine rotating stripes, ringed, with an off-register outline "shadow" */
 DEF.stripeCircle = {
-  name: '縞の円', tags: ['graphic', 'pop'], w: 0.9, layer: 'front', ae: 'stripes',
+  name: '縞の円', tags: ['graphic', 'pop'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -10090,7 +10044,7 @@ DEF.stripeCircle = {
 
 /* 装飾コーナー — art-deco corner ornaments (stepped double L, quarter arc, diamonds) drawn out from two screen corners */
 DEF.decoCorners = {
-  name: '装飾コーナー', tags: ['editorial', 'graphic', 'calm'], w: 0.9, layer: 'front', ae: 'brackets',
+  name: '装飾コーナー', tags: ['editorial', 'graphic', 'calm'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -10124,7 +10078,7 @@ DEF.decoCorners = {
 
 /* 半円の積層 — Bauhaus half-circles: a stacked tower of domes, a scalloped row, or nested rainbow arches */
 DEF.halfCircles = {
-  name: '半円の積層', tags: ['graphic', 'pop', 'calm'], w: 0.9, layer: 'front', ae: 'shapes',
+  name: '半円の積層', tags: ['graphic', 'pop', 'calm'], w: 0.9, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10165,7 +10119,7 @@ DEF.halfCircles = {
 
 /* 循環矢印 — circular chasing arrows (2 or 3) rotating round a small readout, like a repeat / refresh glyph */
 DEF.loopArrows = {
-  name: '循環矢印', tags: ['graphic', 'pop', 'editorial'], w: 0.8, layer: 'front', ae: 'arrows',
+  name: '循環矢印', tags: ['graphic', 'pop', 'editorial'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10189,7 +10143,7 @@ DEF.loopArrows = {
 
 /* スターバースト — a zig-zag "sale sticker" badge that spins in beside the lyric, with a word / number inside */
 DEF.starburst = {
-  name: 'スターバースト', tags: ['pop', 'graphic'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: 'スターバースト', tags: ['pop', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -10216,7 +10170,7 @@ DEF.starburst = {
 /* 正の字 — hand-drawn tally marks (正) counting up stroke by stroke through the cut */
 const SEI = [[[0.1, 0.12], [0.9, 0.12]], [[0.5, 0.12], [0.5, 0.9]], [[0.5, 0.5], [0.84, 0.5]], [[0.22, 0.46], [0.22, 0.9]], [[0.02, 0.9], [0.98, 0.9]]];
 DEF.tally = {
-  name: '正の字', tags: ['editorial', 'pop', 'emotional'], w: 0.8, layer: 'front', ae: 'counter',
+  name: '正の字', tags: ['editorial', 'pop', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10250,7 +10204,7 @@ DEF.tally = {
 /* カーソル — a mouse pointer glides in and clicks beside the lyric (ripple + tooltip), or drags a marching-ants selection round it */
 const CURSOR = [[0, 0], [0, 1], [0.27, 0.76], [0.45, 1.13], [0.6, 1.06], [0.42, 0.7], [0.74, 0.7]];
 DEF.cursorClick = {
-  name: 'カーソル', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front', ae: 'arrows',
+  name: 'カーソル', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env), m = MG(env);
@@ -10306,7 +10260,7 @@ DEF.cursorClick = {
 
 /* ウィンドウ — an OS window frame opening round the lyric: title bar with buttons, file name, scrollbar and status line */
 DEF.windowChrome = {
-  name: 'ウィンドウ', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front', ae: 'brackets',
+  name: 'ウィンドウ', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc } = env, u = U(env), m = MG(env);
@@ -10357,7 +10311,7 @@ function bandSpot(env, bb, w, h, P, gap) {
 
 /* 読み込みバー — a UI progress bar: pill track, barber-pole fill that loads in uneven bursts, file-size readout */
 DEF.progressBar = {
-  name: '読み込みバー', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front', ae: 'bars',
+  name: '読み込みバー', tags: ['pop', 'graphic', 'glitch'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, sc, ctx } = env, u = U(env);
@@ -10394,7 +10348,7 @@ DEF.progressBar = {
 /* トグル — a small settings panel: two or three iOS-style switches flicking on one after another */
 const TOGGLE_LABELS = [['SHUFFLE', 'REPEAT', 'LYRICS'], ['想い', '記憶', '未練'], ['LOVE', 'MEMORY', 'REPLAY'], ['声', '光', '夜']];
 DEF.toggleSwitch = {
-  name: 'トグル', tags: ['pop', 'graphic'], w: 0.7, layer: 'front', ae: 'shapes',
+  name: 'トグル', tags: ['pop', 'graphic'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10418,7 +10372,7 @@ DEF.toggleSwitch = {
 
 /* 通知 — a line-art bell that rings each time its red badge counts up */
 DEF.notifBell = {
-  name: '通知', tags: ['pop', 'emotional'], w: 0.7, layer: 'front', ae: 'counter',
+  name: '通知', tags: ['pop', 'emotional'], w: 0.7, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -10449,7 +10403,7 @@ DEF.notifBell = {
 /* いいね — a heart button that fills with a burst when "liked", beside a rolling like counter */
 const heartPts = (cx, cy, s) => { const o = []; for (let i = 0; i < 36; i++) { const t = i / 36 * TAU; const x = 16 * Math.pow(Math.sin(t), 3), y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t); o.push([cx + x * s / 17, cy - y * s / 17]); } return o; };
 DEF.likeCounter = {
-  name: 'いいね', tags: ['pop', 'emotional'], w: 0.8, layer: 'front', ae: 'counter',
+  name: 'いいね', tags: ['pop', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc, ctx } = env, u = U(env);
@@ -10485,7 +10439,7 @@ DEF.likeCounter = {
 
 /* 再生ボタン — transport controls (prev / play / next); play morphs into pause on a click, with a running time readout */
 DEF.mediaControls = {
-  name: '再生ボタン', tags: ['pop', 'graphic', 'emotional'], w: 0.8, layer: 'front', ae: 'shapes',
+  name: '再生ボタン', tags: ['pop', 'graphic', 'emotional'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10516,7 +10470,7 @@ DEF.mediaControls = {
 
 /* 音量 — a speaker glyph with an ascending stepped volume meter that follows the music */
 DEF.volumeBars = {
-  name: '音量', tags: ['pop', 'glitch', 'graphic'], w: 0.8, layer: 'front', ae: 'waveform',
+  name: '音量', tags: ['pop', 'glitch', 'graphic'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { sc } = env, u = U(env);
@@ -10544,7 +10498,7 @@ DEF.volumeBars = {
 
 /* 音符 — eighth / beamed / quarter notes floating up and swaying out of the free space beside the lyric */
 DEF.musicNotes = {
-  name: '音符', tags: ['pop', 'emotional', 'calm'], w: 0.8, layer: 'front', ae: 'sparks',
+  name: '音符', tags: ['pop', 'emotional', 'calm'], w: 0.8, layer: 'front',
   draw(env, bb0, P) {
     if (env.pass !== 'main') return;
     const bb = getBB(env, bb0), { W, H, sc, ctx } = env, u = U(env);
@@ -11577,7 +11531,7 @@ const DEFS = {
 
   springIn: {
     // every glyph is fired up from below on a loose spring: overshoots the line, dips back, settles
-    name: 'バネ', tags: ['pop'], w: 0.9, ae: 'drop', minDur: 0.5,
+    name: 'バネ', tags: ['pop'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, D = size * 1.7;
@@ -11593,7 +11547,7 @@ const DEFS = {
 
   pendulum: {
     // glyphs hang from a pin above them and swing into place like hanging tags
-    name: '振り子', tags: ['pop', 'emotional', 'calm'], w: 0.9, ae: 'spin', minDur: 0.5,
+    name: '振り子', tags: ['pop', 'emotional', 'calm'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.5, 0.22, 0.9),
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, dir = dirOf(env, 41), size = it.size;
@@ -11624,7 +11578,7 @@ const DEFS = {
 
   rollIn: {
     // glyphs roll in along the line like wheels (rotation coupled to distance travelled)
-    name: '転がり', tags: ['pop', 'graphic'], w: 0.9, ae: 'spin',
+    name: '転がり', tags: ['pop', 'graphic'], w: 0.9,
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, dir = dirOf(env, 43);
       const D = size * 2.3 * (0.75 + 0.4 * env.fx.motion);
@@ -11641,7 +11595,7 @@ const DEFS = {
 
   slingshot: {
     // the line is drawn back on two elastic bands, released, overshoots and settles
-    name: 'パチンコ', tags: ['pop', 'graphic'], w: 0.7, ae: 'stretch', minDur: 0.55,
+    name: 'パチンコ', tags: ['pop', 'graphic'], w: 0.7, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, b = box(it), size = it.size, tA = 0.36;
@@ -11676,7 +11630,7 @@ const DEFS = {
 
   rockSettle: {
     // glyphs drop in tilted, land on a corner and rock side to side until they sit flat
-    name: 'ぐらぐら着地', tags: ['pop'], w: 0.8, ae: 'drop', minDur: 0.55,
+    name: 'ぐらぐら着地', tags: ['pop'], w: 0.8, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.22, 0.9),
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, seed = it.seed | 0, tL = 0.3;
@@ -11695,7 +11649,7 @@ const DEFS = {
 
   bounceBall: {
     // karaoke ball: an accent ball hops from glyph to glyph, each landing kicks its glyph into place
-    name: 'バウンドボール', tags: ['pop', 'emotional'], w: 0.8, ae: 'pop', minDur: 0.8, maxChars: 20,
+    name: 'バウンドボール', tags: ['pop', 'emotional'], w: 0.8, minDur: 0.8, maxChars: 20,
     inDur: (dur, n) => clamp(0.3 + n * 0.06, 0.45, Math.max(0.45, Math.min(1.25, dur * 0.6))),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size;
@@ -11733,7 +11687,7 @@ const DEFS = {
 
   snapRail: {
     // glyphs float off the line at random heights; an accent rail draws in and they all snap onto it
-    name: 'スナップ整列', tags: ['graphic', 'pop', 'editorial'], w: 0.9, ae: 'assemble', minDur: 0.55,
+    name: 'スナップ整列', tags: ['graphic', 'pop', 'editorial'], w: 0.9, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, seed = it.seed | 0;
@@ -11770,7 +11724,7 @@ const DEFS = {
 
   fanOpen: {
     // glyphs start stacked like the ribs of a closed folding fan and sweep open around a pivot
-    name: '扇開き', tags: ['emotional', 'graphic', 'calm'], w: 0.9, ae: 'spin',
+    name: '扇開き', tags: ['emotional', 'graphic', 'calm'], w: 0.9,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b = box(it);
@@ -11791,7 +11745,7 @@ const DEFS = {
   },
   cylinder: {
     // the line is printed on a turning drum: glyphs wrap round from the back, then the drum unrolls flat
-    name: '円筒回転', tags: ['graphic', 'pop', 'editorial'], w: 0.9, ae: 'spin',
+    name: '円筒回転', tags: ['graphic', 'pop', 'editorial'], w: 0.9,
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b = box(it);
       const U0 = vert ? b.y0 : b.x0, U1 = vert ? b.y1 : b.x1, uc = (U0 + U1) / 2;
@@ -11812,7 +11766,7 @@ const DEFS = {
 
   shuffle: {
     // the glyphs appear in shuffled slots, then trade places along over/under arcs like a shell game
-    name: 'シャッフル', tags: ['pop', 'glitch', 'graphic'], w: 0.9, ae: 'scramble', minDur: 0.55,
+    name: 'シャッフル', tags: ['pop', 'glitch', 'graphic'], w: 0.9, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, seed = it.seed | 0;
@@ -11842,7 +11796,7 @@ const DEFS = {
 
   stopMotion: {
     // stop-motion: glyphs jump toward their place in a handful of held key poses, each slightly off
-    name: 'コマ撮り', tags: ['pop', 'emotional'], w: 0.8, ae: 'pop', minDur: 0.5,
+    name: 'コマ撮り', tags: ['pop', 'emotional'], w: 0.8, minDur: 0.5,
     inDur: dur => clamp(dur * 0.45, 0.25, 0.8),
     apply(env, it, p) {
       const size = it.size, seed = it.seed | 0, K = 5;
@@ -11860,7 +11814,7 @@ const DEFS = {
 
   ripple: {
     // a ring wave spreads from the middle; each glyph surfaces as the crest passes and bobs once
-    name: '波紋', tags: ['emotional', 'calm', 'graphic'], w: 1, ae: 'pop',
+    name: '波紋', tags: ['emotional', 'calm', 'graphic'], w: 1,
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, size = it.size, b0 = box(it);
       const Rmax = Math.hypot(b0.w, b0.h) / 2 + size * 0.3;
@@ -11887,7 +11841,7 @@ const DEFS = {
 
   zipper: {
     // a zip slider runs along the line; ahead of it the glyphs are split up/down like open teeth
-    name: 'ジッパー', tags: ['graphic', 'pop'], w: 0.8, ae: 'slice',
+    name: 'ジッパー', tags: ['graphic', 'pop'], w: 0.8,
     inDur: dur => clamp(dur * 0.42, 0.18, 0.75),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b = box(it);
@@ -11917,7 +11871,7 @@ const DEFS = {
 
   zoomAlt: {
     // depth alternates: odd glyphs dive in from in front of the lens, even ones grow from far away
-    name: '交互ズーム', tags: ['pop', 'graphic', 'glitch'], w: 0.9, ae: 'zoom',
+    name: '交互ズーム', tags: ['pop', 'graphic', 'glitch'], w: 0.9,
     apply(env, it, p) {
       const size = it.size, bl = Math.min(30, size * 0.1);
       glyphs(it, (i, g, n) => {
@@ -11931,7 +11885,7 @@ const DEFS = {
 
   tiltUp: {
     // the line lies flat on the floor and swings up on a hinge along its bottom edge
-    name: '起立', tags: ['graphic', 'editorial', 'pop'], w: 0.9, ae: 'stretch',
+    name: '起立', tags: ['graphic', 'editorial', 'pop'], w: 0.9,
     apply(env, it, p) {
       const th = 86 * spring(p, 3.2, 1.25), k = Math.max(0.03, Math.cos(th * DEG)), b = box(it), size = it.size;
       const bg = pick(env.sc.bg), col = colOf(it), main = isMain(it);
@@ -11951,7 +11905,7 @@ const DEFS = {
   stickerPeel: {
     // every glyph is pressed on like a die-cut sticker: the stuck part grows from one corner while
     // the rest is still folded back as a mirrored flap
-    name: 'シール貼り', tags: ['pop', 'graphic', 'editorial'], w: 0.9, ae: 'wipe', minDur: 0.5,
+    name: 'シール貼り', tags: ['pop', 'graphic', 'editorial'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.85),
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, size = it.size, pad = size * 0.12, bg = pick(env.sc.bg), col = colOf(it);
@@ -12002,7 +11956,7 @@ const DEFS = {
 
   crumple: {
     // each glyph arrives as a crumpled ball of its own strokes and springs open flat
-    name: 'くしゃ戻り', tags: ['pop', 'graphic', 'emotional'], w: 0.7, ae: 'assemble', pieces: true, minDur: 0.5,
+    name: 'くしゃ戻り', tags: ['pop', 'graphic', 'emotional'], w: 0.7, pieces: true, minDur: 0.5,
     inDur: dur => clamp(dur * 0.45, 0.22, 0.8),
     apply(env, it, p) {
       if (p >= 1) return;
@@ -12031,7 +11985,7 @@ const DEFS = {
   noteUnfold: {
     // every glyph is a note folded in four: the top-left quarter shows, the right half swings open on the
     // vertical crease, then the bottom half swings down on the horizontal crease
-    name: '手紙開き', tags: ['emotional', 'calm', 'graphic'], w: 0.8, ae: 'pop', minDur: 0.6,
+    name: '手紙開き', tags: ['emotional', 'calm', 'graphic'], w: 0.8, minDur: 0.6,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const col = colOf(it), bg = pick(env.sc.bg), size = it.size, isx = it.sx || 1, isy = it.sy || 1;
@@ -12074,7 +12028,7 @@ const DEFS = {
 
   tornJoin: {
     // the line is torn in two along a ragged seam; the halves slide in from opposite sides and butt together
-    name: '破れ合わせ', tags: ['graphic', 'emotional', 'pop'], w: 0.8, ae: 'slice',
+    name: '破れ合わせ', tags: ['graphic', 'emotional', 'pop'], w: 0.8,
     inDur: dur => clamp(dur * 0.42, 0.18, 0.75),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, seed = it.seed | 0, b0 = box(it);
@@ -12121,7 +12075,7 @@ const DEFS = {
 
   splitFlap: {
     // split-flap display (パタパタ): each glyph flaps through a few random characters before landing on its own
-    name: 'パタパタ', tags: ['glitch', 'editorial', 'graphic'], w: 0.9, ae: 'scramble', minDur: 0.75,
+    name: 'パタパタ', tags: ['glitch', 'editorial', 'graphic'], w: 0.9, minDur: 0.75,
     inDur: (dur, n) => clamp(0.35 + n * 0.03, 0.45, Math.max(0.45, Math.min(1.0, dur * 0.55))),
     apply(env, it, p) {
       const seed = it.seed | 0, col = colOf(it), bg = pick(env.sc.bg), size = it.size, isx = it.sx || 1, isy = it.sy || 1;
@@ -12176,7 +12130,7 @@ const DEFS = {
 
   overexpose: {
     // the line flashes in blown-out white (bloom + glow) and the exposure is pulled down to its real colour
-    name: '露出オーバー', tags: ['emotional', 'pop', 'glitch'], w: 1, ae: 'blur',
+    name: '露出オーバー', tags: ['emotional', 'pop', 'glitch'], w: 1,
     inDur: dur => clamp(dur * 0.42, 0.18, 0.75),
     apply(env, it, p) {
       const hot = hotOf(env, it), size = it.size, tF = 0.12;
@@ -12194,7 +12148,7 @@ const DEFS = {
 
   glint: {
     // the line waits as a faint ghost; a slanted glint sweeps across and leaves it lit behind the highlight
-    name: 'グリント', tags: ['editorial', 'emotional', 'graphic'], w: 1, ae: 'wipe',
+    name: 'グリント', tags: ['editorial', 'emotional', 'graphic'], w: 1,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, kS = 0.45, hot = J.lum(colOf(it)) > 0.7 || J.lum(pick(env.sc.bg)) > 0.5 ? pick(env.sc.accent, env.sc.fg) : '#ffffff';
@@ -12230,7 +12184,7 @@ const DEFS = {
 
   loupe: {
     // a magnifying glass slides along the line; glyphs swell under the lens and are left sharp behind it
-    name: 'ルーペ', tags: ['editorial', 'pop', 'calm'], w: 0.8, ae: 'zoom', minDur: 0.6,
+    name: 'ルーペ', tags: ['editorial', 'pop', 'calm'], w: 0.8, minDur: 0.6,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b = box(it);
@@ -12261,7 +12215,7 @@ const DEFS = {
 
   filmFeed: {
     // projector losing its loop: the frame rolls through the gate with a frame line, the lamp flickers, then it locks
-    name: 'フィルム送り', tags: ['emotional', 'glitch', 'editorial'], w: 0.8, ae: 'flicker', minDur: 0.55,
+    name: 'フィルム送り', tags: ['emotional', 'glitch', 'editorial'], w: 0.8, minDur: 0.55,
     inDur: dur => clamp(dur * 0.48, 0.22, 0.85),
     apply(env, it, p) {
       const size = it.size, seed = env.cut.seed | 0, b = box(it), R0 = dRange(it, b);
@@ -12286,7 +12240,7 @@ const DEFS = {
 
   backlight: {
     // a halo of light rises behind the line first, the glyphs read as dark silhouettes against it, then light up
-    name: '逆光', tags: ['emotional', 'calm'], w: 0.9, ae: 'blur', minDur: 0.5,
+    name: '逆光', tags: ['emotional', 'calm'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.48, 0.22, 0.85),
     apply(env, it, p) {
       const size = it.size, bg = pick(env.sc.bg), col = colOf(it), glow = pick(env.sc.accent, env.sc.fg);
@@ -12309,7 +12263,7 @@ const DEFS = {
 
   lightLeak: {
     // a warm light leak drifts along the line; each glyph burns in hot where it passes and cools to its colour
-    name: '光漏れ', tags: ['emotional', 'calm', 'pop'], w: 0.9, ae: 'blur',
+    name: '光漏れ', tags: ['emotional', 'calm', 'pop'], w: 0.9,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b = box(it);
@@ -12339,7 +12293,7 @@ const DEFS = {
 
   heatHaze: {
     // the line shimmers in through heat haze: thin slices wobble sideways and calm down
-    name: '陽炎', tags: ['emotional', 'calm', 'glitch'], w: 0.9, ae: 'slice',
+    name: '陽炎', tags: ['emotional', 'calm', 'glitch'], w: 0.9,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, R = dRange(it, box(it)), t = env.lt;
@@ -12363,7 +12317,7 @@ const DEFS = {
 
   crtOn: {
     // CRT power-on: a bright dot stretches into a scan line, which opens vertically into the text
-    name: 'CRT電源', tags: ['glitch', 'pop', 'graphic'], w: 0.9, ae: 'stretch',
+    name: 'CRT電源', tags: ['glitch', 'pop', 'graphic'], w: 0.9,
     apply(env, it, p) {
       const size = it.size, b = box(it), hot = hotOf(env, it), col = colOf(it), prim = isPrimary(it);
       const e1 = oQuart(p / 0.3), e2 = oBack(clamp((p - 0.24) / 0.5), 1.6), cool = sstep(0.3, 0.95, p);
@@ -12386,7 +12340,7 @@ const DEFS = {
 
   interlace: {
     // interlaced scan: the even scanlines are drawn top to bottom, then a second field fills the odd ones
-    name: 'インターレース', tags: ['glitch', 'graphic', 'editorial'], w: 0.9, ae: 'slice',
+    name: 'インターレース', tags: ['glitch', 'graphic', 'editorial'], w: 0.9,
     apply(env, it, p) {
       const size = it.size, hr = Math.max(2.5, size * 0.065);
       const geo = b => { const pad = size * 0.25, V0 = b.y0 - pad, V1 = b.y1 + pad; return { V0, V1, n: Math.min(260, Math.ceil((V1 - V0) / hr)) }; };
@@ -12410,7 +12364,7 @@ const DEFS = {
 
   loadingBar: {
     // a progress bar fills in uneven bursts (with a % counter); glyphs pop up as the bar passes under them
-    name: 'ローディング', tags: ['graphic', 'editorial', 'glitch'], w: 0.8, ae: 'wipe', minDur: 0.7,
+    name: 'ローディング', tags: ['graphic', 'editorial', 'glitch'], w: 0.8, minDur: 0.7,
     inDur: dur => clamp(dur * 0.55, 0.3, 1.0),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, seed = env.cut.seed | 0;
@@ -12449,7 +12403,7 @@ const DEFS = {
 
   dither: {
     // ordered (Bayer 4×4) dither dissolve: the line fills in through a regular crosshatch of pixels
-    name: 'ディザ', tags: ['glitch', 'graphic'], w: 0.9, ae: 'flicker',
+    name: 'ディザ', tags: ['glitch', 'graphic'], w: 0.9,
     apply(env, it, p) {
       const size = it.size, dir = dirOf(env, 101);
       clipLocal(it, (ctx, b, x, env2) => {
@@ -12477,7 +12431,7 @@ const DEFS = {
 
   odometer: {
     // odometer reels: each glyph rolls up through a few characters inside its own window and clicks to a stop
-    name: 'ドラム回転', tags: ['glitch', 'editorial', 'pop'], w: 0.9, ae: 'scramble', minDur: 0.55,
+    name: 'ドラム回転', tags: ['glitch', 'editorial', 'pop'], w: 0.9, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const seed = it.seed | 0, isy = it.sy || 1, digits = /^[0-9\s]+$/.test(String(it.text || ''));
@@ -12510,7 +12464,7 @@ const DEFS = {
 
   matrixRain: {
     // data rain: each glyph falls in as the bright head of a short stream of flickering characters
-    name: 'データ降下', tags: ['glitch', 'graphic'], w: 0.8, ae: 'scramble', minDur: 0.55,
+    name: 'データ降下', tags: ['glitch', 'graphic'], w: 0.8, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, isy = it.sy || 1, size = it.size, seed = it.seed | 0, step = env.step;
@@ -12543,7 +12497,7 @@ const DEFS = {
 
   hatchFill: {
     // each glyph is first printed as a hatch / halftone pattern with a hairline outline, then the solid ink fills in
-    name: 'ハッチ→ベタ', tags: ['graphic', 'editorial'], w: 0.9, ae: 'blur',
+    name: 'ハッチ→ベタ', tags: ['graphic', 'editorial'], w: 0.9,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const size = it.size, col = colOf(it), pat = ['stripes', 'hatch', 'dots'][J.h(env.cut.seed | 0, 131) % 3];
@@ -12566,7 +12520,7 @@ const DEFS = {
 
   brushReveal: {
     // dry-brush stroke: a ragged-edged brush pass (its bristle tips in the accent colour) paints each line in, line after line
-    name: '筆払い', tags: ['emotional', 'editorial', 'calm'], w: 1, ae: 'wipe',
+    name: '筆払い', tags: ['emotional', 'editorial', 'calm'], w: 1,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.85),
     apply(env, it, p) {
       const vert = !!it.vertical, size = it.size, seed = it.seed | 0, K = 14, tail = size * 1.1, pad = size * 0.2;
@@ -12598,7 +12552,7 @@ const DEFS = {
 
   inkDrop: {
     // an ink drop lands inside every glyph and spreads outwards in an irregular blot that reveals it
-    name: 'インク滴', tags: ['calm', 'emotional', 'graphic'], w: 1, ae: 'blur',
+    name: 'インク滴', tags: ['calm', 'emotional', 'graphic'], w: 1,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.85),
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, size = it.size, seed = it.seed | 0;
@@ -12637,7 +12591,7 @@ const DEFS = {
 
   quarters: {
     // the line is cut into four quadrants that fly in from the four corners and lock together
-    name: '四方集結', tags: ['graphic', 'pop'], w: 0.9, ae: 'assemble',
+    name: '四方集結', tags: ['graphic', 'pop'], w: 0.9,
     apply(env, it, p) {
       const size = it.size, b0 = box(it), D = size * (glyphN(it) > 1 ? 1.1 : 0.5) + Math.max(b0.w, b0.h) * 0.12, big = size * 30, dir = dirOf(env, 161);
       const Q = [[-1, -1, 0], [1, 1, 1], [1, -1, 2], [-1, 1, 3]];                  // diagonal pairs arrive together
@@ -12663,7 +12617,7 @@ const DEFS = {
 
   invertBox: {
     // a solid block wipes on with the lyric knocked out of it, then drops away and leaves the plain text
-    name: '反転抜け', tags: ['graphic', 'editorial', 'pop'], w: 0.9, ae: 'wipe',
+    name: '反転抜け', tags: ['graphic', 'editorial', 'pop'], w: 0.9,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const size = it.size, m = size * 0.16, bg = pick(env.sc.bg);
@@ -12684,7 +12638,7 @@ const DEFS = {
 
   printRegister: {
     // misregistered riso print: two halftone colour plates sit offset and jolt into register in a few hard steps
-    name: '版ズレ', tags: ['graphic', 'pop', 'editorial'], w: 0.9, ae: 'slice',
+    name: '版ズレ', tags: ['graphic', 'pop', 'editorial'], w: 0.9,
     inDur: dur => clamp(dur * 0.45, 0.2, 0.8),
     apply(env, it, p) {
       const size = it.size, seed = env.cut.seed | 0;
@@ -12710,7 +12664,7 @@ const DEFS = {
 
   echoCount: {
     // count-in: three stepped copies trail behind the line and drop off one per beat (3, 2, 1, on)
-    name: 'カウントイン', tags: ['pop', 'graphic', 'glitch'], w: 0.8, ae: 'zoom', minDur: 0.55,
+    name: 'カウントイン', tags: ['pop', 'graphic', 'glitch'], w: 0.8, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const size = it.size, dir = dirOf(env, 181), x4 = clamp(p / 0.88) * 4, b = Math.min(3, Math.floor(x4)), f = x4 - b;
@@ -12723,7 +12677,7 @@ const DEFS = {
 
   liquidFill: {
     // the glyphs fill up like glasses: a wavy liquid level rises through hairline outlines
-    name: '水位上昇', tags: ['emotional', 'calm', 'pop'], w: 0.9, ae: 'wipe', minDur: 0.5,
+    name: '水位上昇', tags: ['emotional', 'calm', 'pop'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const size = it.size, t = env.ltb, ph = J.r(env.cut.seed | 0, 201) * TAU, col = colOf(it);
@@ -12756,7 +12710,7 @@ const DEFS = {
 
   windBlown: {
     // the strokes of every glyph are blown in from one side on a gust, fluttering like leaves before they settle
-    name: '風に乗って', tags: ['emotional', 'calm'], w: 0.8, ae: 'assemble', pieces: true, minDur: 0.55,
+    name: '風に乗って', tags: ['emotional', 'calm'], w: 0.8, pieces: true, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       if (p >= 1) return;
@@ -12781,7 +12735,7 @@ const DEFS = {
 
   strokeOrder: {
     // each glyph is built up stroke by stroke, top-left to bottom-right, as if written by hand
-    name: '一画ずつ', tags: ['calm', 'emotional', 'editorial'], w: 0.9, ae: 'assemble', pieces: true, minDur: 0.6,
+    name: '一画ずつ', tags: ['calm', 'emotional', 'editorial'], w: 0.9, pieces: true, minDur: 0.6,
     inDur: (dur, n) => clamp(0.3 + n * 0.06, 0.4, Math.max(0.4, Math.min(1.2, dur * 0.6))),
     apply(env, it, p) {
       if (p >= 1) return;
@@ -12802,7 +12756,7 @@ const DEFS = {
 
   clockWipe: {
     // every glyph is uncovered by a clock hand sweeping once around its centre
-    name: '時計回り', tags: ['graphic', 'pop', 'editorial'], w: 0.9, ae: 'wipe',
+    name: '時計回り', tags: ['graphic', 'pop', 'editorial'], w: 0.9,
     apply(env, it, p) {
       const isx = it.sx || 1, isy = it.sy || 1, size = it.size, seed = it.seed | 0;
       const qf = (i, n) => stg(p, ordLR(i, n), 0.5);
@@ -12836,7 +12790,7 @@ const DEFS = {
 
   shadowFirst: {
     // each glyph's shadow lands first; the glyph drops from above the lens straight onto it
-    name: '影落とし', tags: ['pop', 'graphic', 'emotional'], w: 0.9, ae: 'drop', minDur: 0.5,
+    name: '影落とし', tags: ['pop', 'graphic', 'emotional'], w: 0.9, minDur: 0.5,
     inDur: dur => clamp(dur * 0.48, 0.22, 0.85),
     apply(env, it, p) {
       const size = it.size, bg = pick(env.sc.bg), sh = J.mix(bg, J.lum(bg) < 0.5 ? pick(env.sc.fg) : '#000000', 0.28), tL = 0.72;
@@ -12860,7 +12814,7 @@ const DEFS = {
 
   bubbles: {
     // glyphs float up inside soap bubbles, wobbling, and pop out full size when the bubbles burst
-    name: '泡', tags: ['pop', 'emotional', 'calm'], w: 0.8, ae: 'pop', minDur: 0.55,
+    name: '泡', tags: ['pop', 'emotional', 'calm'], w: 0.8, minDur: 0.55,
     inDur: dur => clamp(dur * 0.5, 0.25, 0.9),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, seed = it.seed | 0, tP = 0.68;
@@ -12896,7 +12850,7 @@ const DEFS = {
 
   tokoroten: {
     // ところてん: the line is pushed out through a slit, glyphs squeezed thin at the slit and relaxing as they emerge
-    name: 'ところてん', tags: ['pop', 'graphic'], w: 0.7, ae: 'stretch', minDur: 0.5,
+    name: 'ところてん', tags: ['pop', 'graphic'], w: 0.7, minDur: 0.5,
     inDur: dur => clamp(dur * 0.48, 0.22, 0.85),
     apply(env, it, p) {
       const vert = !!it.vertical, isx = it.sx || 1, isy = it.sy || 1, size = it.size, b0 = box(it);
@@ -14250,7 +14204,7 @@ const X = {};
 
 /* sticker peel: a fold line crosses the text diagonally; the peeled part is drawn mirrored (the back of the sticker) */
 X.peelOff = {
-  name: 'ステッカー剥がし', tags: ['pop', 'graphic'], w: 1, ae: 'wipe',
+  name: 'ステッカー剥がし', tags: ['pop', 'graphic'], w: 1,
   outDur: dur => J.clamp(dur * 0.36, 0.3, 0.7),
   apply(env, it, p) {
     const q = isSingle(env, it) ? win(p, orderOf(env, it)(0, 1), 0.4) : p;
@@ -14287,7 +14241,7 @@ X.peelOff = {
 
 /* crumple into a ball in three quick squeezes, then toss it away */
 X.crumpleOut = {
-  name: '丸めて捨てる', tags: ['pop', 'emotional'], w: 0.9, ae: 'shrink', minDur: 0.8,
+  name: '丸めて捨てる', tags: ['pop', 'emotional'], w: 0.9, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.42, 0.36, 0.85),
   apply(env, it, p) {
     const seed = it.seed | 0, W = env.W, H = env.H, bg = env.sc.bg, c0 = colOf(it);
@@ -14327,7 +14281,7 @@ X.crumpleOut = {
 
 /* torn in two along a jagged line; the halves rotate apart and fall away */
 X.tearOut = {
-  name: '破り捨て', tags: ['emotional', 'graphic'], w: 0.9, ae: 'slice',
+  name: '破り捨て', tags: ['emotional', 'graphic'], w: 0.9,
   outDur: dur => J.clamp(dur * 0.38, 0.3, 0.75),
   apply(env, it, p) {
     const vert = !!it.vertical, seed = it.seed | 0, sz = it.size;
@@ -14377,7 +14331,7 @@ X.tearOut = {
 
 /* a burning front with a rough, flickering edge eats across the text: heated band, glowing rim, soot, embers */
 X.scorchOut = {
-  name: '焦げて消える', tags: ['emotional', 'glitch'], w: 0.8, ae: 'wipe',
+  name: '焦げて消える', tags: ['emotional', 'glitch'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.4, 0.32, 0.8),
   apply(env, it, p) {
     const single = isSingle(env, it), q = p;          // single-glyph items share one screen-wide front
@@ -14436,7 +14390,7 @@ X.scorchOut = {
 
 /* overexposure: the text blows out to white (bleaches to the paper on light schemes) with a bloom and a lens streak */
 X.overexposeOut = {
-  name: '白飛び', tags: ['emotional', 'calm', 'pop'], w: 1, ae: 'blur',
+  name: '白飛び', tags: ['emotional', 'calm', 'pop'], w: 1,
   apply(env, it, p) {
     const dark = darkBg(env), c0 = colOf(it), sz = it.size, acc = env.sc.accent;
     const hot = dark ? '#ffffff' : env.sc.bg;
@@ -14475,7 +14429,7 @@ X.overexposeOut = {
 
 /* a bright scan line runs down; behind it the raster breaks into interlaced lines that shear sideways and thin out */
 X.scanOut = {
-  name: '走査線消去', tags: ['glitch', 'graphic'], w: 0.9, ae: 'slice',
+  name: '走査線消去', tags: ['glitch', 'graphic'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, seed = it.seed | 0, bb = dBox(it, sz * 0.3), h = bb.y1 - bb.y0;
     let pitch = Math.max(2.5, sz * 0.065); if (h / pitch > 64) pitch = h / 64;
@@ -14519,7 +14473,7 @@ X.scanOut = {
 
 /* slanted stripes, each wiped along its own length, alternating direction and staggered across the text */
 X.stripesOut = {
-  name: 'ストライプ消去', tags: ['graphic', 'pop'], w: 0.9, ae: 'wipe',
+  name: 'ストライプ消去', tags: ['graphic', 'pop'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, bb = dBox(it, sz * 0.12), acc = env.sc.accent;
     const ang = (cutBit(env, 41) ? 64 : 116) * DEG;
@@ -14560,7 +14514,7 @@ X.stripesOut = {
 
 /* the fill breaks into a halftone screen whose dots shrink away in a sweep */
 X.halftoneOut = {
-  name: '網点に消える', tags: ['graphic', 'calm'], w: 0.9, ae: 'shrink',
+  name: '網点に消える', tags: ['graphic', 'calm'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, bb = dBox(it, sz * 0.1), w = bb.x1 - bb.x0, h = bb.y1 - bb.y0, vert = !!it.vertical;
     let c = Math.max(3, sz * 0.15);
@@ -14583,7 +14537,7 @@ X.halftoneOut = {
 
 /* blackboard eraser: a felt block zig-zags lane by lane, leaving a faint chalky smear that fades */
 X.eraserOut = {
-  name: '黒板消し', tags: ['editorial', 'calm'], w: 0.9, ae: 'wipe', minDur: 0.9,
+  name: '黒板消し', tags: ['editorial', 'calm'], w: 0.9, minDur: 0.9,
   outDur: dur => J.clamp(dur * 0.42, 0.36, 0.85),
   apply(env, it, p) {
     const sz = it.size, vert = !!it.vertical, single = isSingle(env, it), W = env.W, H = env.H;
@@ -14634,7 +14588,7 @@ X.eraserOut = {
 
 /* sucked into a single point beyond the end of the line, nearest glyph first, stretching as it goes */
 X.vacuumOut = {
-  name: '一点に吸われる', tags: ['pop', 'graphic'], w: 0.9, ae: 'shrink',
+  name: '一点に吸われる', tags: ['pop', 'graphic'], w: 0.9,
   apply(env, it, p) {
     const vert = !!it.vertical, sz = it.size, acc = env.sc.accent, rev = cutBit(env, 61), seed = it.seed | 0;
     const single = isSingle(env, it);
@@ -14686,7 +14640,7 @@ X.vacuumOut = {
 
 /* weathered into sand: grains lift off from the upwind side and stream away on the wind */
 X.sandOut = {
-  name: '砂になって飛ぶ', tags: ['emotional', 'calm'], w: 1, ae: 'drift',
+  name: '砂になって飛ぶ', tags: ['emotional', 'calm'], w: 1,
   outDur: dur => J.clamp(dur * 0.44, 0.36, 0.9), minDur: 0.8,
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, vert = !!it.vertical, W = env.W;
@@ -14728,7 +14682,7 @@ X.sandOut = {
 
 /* fed down into a shredder slot: above it the text is intact, below it comes out as curling strips */
 X.shredOut = {
-  name: 'シュレッダー', tags: ['graphic', 'pop'], w: 0.8, ae: 'fall', minDur: 0.9,
+  name: 'シュレッダー', tags: ['graphic', 'pop'], w: 0.8, minDur: 0.9,
   outDur: dur => J.clamp(dur * 0.44, 0.38, 0.9),
   apply(env, it, p) {
     const sz = it.size, seed = it.seed | 0, single = isSingle(env, it), H = env.H;
@@ -14771,7 +14725,7 @@ X.shredOut = {
 
 /* dominoes: each glyph topples over its bottom corner onto the next, in a chain */
 X.dominoOut = {
-  name: 'ドミノ倒し', tags: ['pop', 'graphic'], w: 0.9, ae: 'fall', minDur: 0.8,
+  name: 'ドミノ倒し', tags: ['pop', 'graphic'], w: 0.9, minDur: 0.8,
   outDur: (dur, n) => J.clamp(dur * 0.42, 0.36, 0.85),
   apply(env, it, p) {
     const ord0 = orderOf(env, it), rev = cutBit(env, 91), sgn = rev ? -1 : 1, sx0 = it.sx || 1, sy0 = it.sy || 1, sz = it.size;
@@ -14794,7 +14748,7 @@ X.dominoOut = {
 
 /* one pin pops: the text swings down on the other one, settles, then drops away */
 X.hingeOut = {
-  name: '片留めが外れる', tags: ['pop', 'editorial'], w: 0.9, ae: 'fall', minDur: 0.9,
+  name: '片留めが外れる', tags: ['pop', 'editorial'], w: 0.9, minDur: 0.9,
   outDur: dur => J.clamp(dur * 0.46, 0.42, 0.95),
   apply(env, it, p) {
     const single = isSingle(env, it);
@@ -14821,7 +14775,7 @@ X.hingeOut = {
 
 /* launch: every glyph squats, shakes, then blasts upward off the screen on an exhaust trail */
 X.rocketOff = {
-  name: '打ち上げ', tags: ['pop'], w: 0.9, ae: 'drift', minDur: 0.8,
+  name: '打ち上げ', tags: ['pop'], w: 0.9, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.44, 0.36, 0.9),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, acc = env.sc.accent, sub = env.sc.sub, sy0 = it.sy || 1, lay = layOf(it);
@@ -14879,7 +14833,7 @@ function hops(q) {
   return { h: 0, land: 0 };
 }
 X.bounceOff = {
-  name: '弾んで去る', tags: ['pop'], w: 0.9, ae: 'scatter', minDur: 0.8,
+  name: '弾んで去る', tags: ['pop'], w: 0.9, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.45, 0.38, 0.9),
   apply(env, it, p) {
     const dir = cutBit(env, 121) ? 1 : -1, sz = it.size, ord = orderOf(env, it), sy0 = it.sy || 1;
@@ -14902,7 +14856,7 @@ X.bounceOff = {
 
 /* balloons: each glyph floats up on a string, swaying like a pendulum below its balloon */
 X.balloonOff = {
-  name: '風船で飛ぶ', tags: ['emotional', 'calm', 'pop'], w: 0.9, ae: 'drift', minDur: 0.9,
+  name: '風船で飛ぶ', tags: ['emotional', 'calm', 'pop'], w: 0.9, minDur: 0.9,
   outDur: dur => J.clamp(dur * 0.48, 0.42, 1.0),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, sub = env.sc.sub, sy0 = it.sy || 1, lay = layOf(it);
@@ -14943,7 +14897,7 @@ X.balloonOff = {
 
 /* a let-go balloon: each glyph puffs up, then zips around erratically while it shrinks to nothing */
 X.deflateOut = {
-  name: 'しぼんで飛ぶ', tags: ['pop'], w: 0.8, ae: 'scatter',
+  name: 'しぼんで飛ぶ', tags: ['pop'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.42, 0.36, 0.85),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size;
@@ -14972,7 +14926,7 @@ X.deflateOut = {
 
 /* heat haze: the text wobbles in rippling slices, stretches upward and thins into the air */
 X.hazeOut = {
-  name: '陽炎に消える', tags: ['emotional', 'calm'], w: 0.9, ae: 'blur',
+  name: '陽炎に消える', tags: ['emotional', 'calm'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, t = env.ltb, vert = !!it.vertical, e = E.inQuad(p);
     const b0 = box(it);
@@ -14996,7 +14950,7 @@ X.hazeOut = {
 
 /* a pane of glass: an impact cracks it radially, then the shards drop away */
 X.glassBreak = {
-  name: 'ガラス割れ', tags: ['graphic', 'pop', 'glitch'], w: 0.8, ae: 'explode',
+  name: 'ガラス割れ', tags: ['graphic', 'pop', 'glitch'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.42, 0.36, 0.85),
   apply(env, it, p) {
     const single = isSingle(env, it);
@@ -15071,7 +15025,7 @@ X.glassBreak = {
 
 /* zipper: a slider runs along each line; behind it the glyphs are pinched shut onto a line of teeth */
 X.zipOut = {
-  name: 'ジッパー', tags: ['graphic', 'pop'], w: 0.8, ae: 'wipe',
+  name: 'ジッパー', tags: ['graphic', 'pop'], w: 0.8,
   apply(env, it, p) {
     const vert = !!it.vertical, sz = it.size, acc = env.sc.accent, rev = cutBit(env, 161), sub = env.sc.sub;
     const single = isSingle(env, it), N = cutN(env);
@@ -15117,7 +15071,7 @@ X.zipOut = {
 
 /* both halves slam into a seam at the centre and vanish into it, with an impact flash */
 X.clapShut = {
-  name: '中央で閉じる', tags: ['graphic', 'pop'], w: 0.9, ae: 'wipe',
+  name: '中央で閉じる', tags: ['graphic', 'pop'], w: 0.9,
   apply(env, it, p) {
     const vert = !!it.vertical, sz = it.size, acc = env.sc.accent, W = env.W;
     const e = E.inCubic(J.clamp(p / 0.62)), hit = J.clamp((p - 0.6) / 0.4);
@@ -15169,7 +15123,7 @@ X.clapShut = {
 
 /* the sign loses power: glyphs flicker on a failing supply and die one by one, leaving dark tubes that fade */
 X.lampOff = {
-  name: '消灯', tags: ['glitch', 'emotional'], w: 0.8, ae: 'glitch',
+  name: '消灯', tags: ['glitch', 'emotional'], w: 0.8,
   apply(env, it, p) {
     const seed = it.seed | 0, step = env.step, c0 = colOf(it), bg = env.sc.bg, dark = darkBg(env), sz = it.size;
     const dimC = mixC(c0, bg, 0.78), hot = dark ? mixC(c0, '#ffffff', 0.5) : c0;
@@ -15191,7 +15145,7 @@ X.lampOff = {
 
 /* slot reels: every glyph spins up like a reel, faster and faster, and stops on an empty cell */
 X.slotOut = {
-  name: 'スロット回転', tags: ['glitch', 'pop'], w: 0.8, ae: 'glitch',
+  name: 'スロット回転', tags: ['glitch', 'pop'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.38, 0.3, 0.7),
   apply(env, it, p) {
     const seed = it.seed | 0, ord = orderOf(env, it), sy0 = it.sy || 1, acc = env.sc.accent;
@@ -15221,7 +15175,7 @@ X.slotOut = {
 
 /* clock wipe: every glyph is swept away by its own little clock hand (a square "cooldown" wipe), one after another */
 X.clockOut = {
-  name: '時計ワイプ', tags: ['graphic', 'editorial'], w: 0.9, ae: 'wipe',
+  name: '時計ワイプ', tags: ['graphic', 'editorial'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, acc = env.sc.accent, cw = !cutBit(env, 191), sg = cw ? 1 : -1, a0 = -Math.PI / 2;
     const ord = orderOf(env, it), lay = layOf(it), vert = !!it.vertical, sx0 = it.sx || 1, sy0 = it.sy || 1;
@@ -15265,7 +15219,7 @@ X.clockOut = {
 
 /* digital rain: glyphs decode into falling columns of characters that pour off the bottom */
 X.matrixOut = {
-  name: 'デジタル雨', tags: ['glitch'], w: 0.8, ae: 'glitch',
+  name: 'デジタル雨', tags: ['glitch'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.42, 0.34, 0.85),
   apply(env, it, p) {
     const seed = it.seed | 0, step = env.step, sz = it.size, sy0 = it.sy || 1, acc = env.sc.accent, c0 = colOf(it);
@@ -15298,7 +15252,7 @@ X.matrixOut = {
 
 /* tornado: the glyphs are caught in a vortex, orbiting a vertical axis (front / back depth) while they are lifted away */
 X.tornadoOut = {
-  name: '竜巻', tags: ['pop'], w: 0.8, ae: 'scatter', minDur: 0.8,
+  name: '竜巻', tags: ['pop'], w: 0.8, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.45, 0.38, 0.9),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, dir = cutBit(env, 211) ? 1 : -1, single = isSingle(env, it), W = env.W;
@@ -15335,7 +15289,7 @@ X.tornadoOut = {
 
 /* rolled up like a poster: a paper roll travels along the line, swallowing the text as it goes */
 X.rollUpOut = {
-  name: '巻き取る', tags: ['graphic', 'editorial'], w: 0.8, ae: 'wipe',
+  name: '巻き取る', tags: ['graphic', 'editorial'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.4, 0.32, 0.8),
   apply(env, it, p) {
     const sz = it.size, vert = !!it.vertical, rev = cutBit(env, 221), single = isSingle(env, it), c0 = colOf(it), bg = env.sc.bg;
@@ -15380,7 +15334,7 @@ X.rollUpOut = {
 
 /* train: the line runs along itself, bends round a curve and leaves the screen, every glyph following the one before */
 X.snakeOut = {
-  name: '列になって去る', tags: ['calm', 'pop'], w: 0.9, ae: 'stretch', minDur: 0.8,
+  name: '列になって去る', tags: ['calm', 'pop'], w: 0.9, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.45, 0.38, 0.9),
   apply(env, it, p) {
     const sz = it.size, rev = cutBit(env, 231), n = cutBit(env, 232) ? 1 : -1, W = env.W, H = env.H;
@@ -15419,7 +15373,7 @@ X.snakeOut = {
 
 /* paper leaves: glyphs detach one by one and flutter down, swaying, tilting and flipping over */
 X.flutterOut = {
-  name: 'ひらひら落ちる', tags: ['emotional', 'calm'], w: 1, ae: 'fall', minDur: 0.8,
+  name: 'ひらひら落ちる', tags: ['emotional', 'calm'], w: 1, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.48, 0.42, 1.0),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, bb = dBox(it, 0), D = env.H - bb.y0 + sz * 1.2, c0 = colOf(it), back = mixC(c0, env.sc.bg, 0.45);
@@ -15439,7 +15393,7 @@ X.flutterOut = {
 
 /* rolling boxes: each glyph tips over its corner and rolls away like a die, leading edge first */
 X.rollOff = {
-  name: '転がって去る', tags: ['pop'], w: 0.8, ae: 'scatter', minDur: 0.8,
+  name: '転がって去る', tags: ['pop'], w: 0.8, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.45, 0.38, 0.9),
   apply(env, it, p) {
     const dir = cutBit(env, 251) ? 1 : -1, sz = it.size, ord = orderOf(env, it), sx0 = it.sx || 1, sy0 = it.sy || 1;
@@ -15462,7 +15416,7 @@ X.rollOff = {
 
 /* folding fan: the line bends into an arc round a pivot, then the ribs close onto one edge and the fan shrinks away */
 X.fanClose = {
-  name: '扇を閉じる', tags: ['graphic', 'editorial', 'emotional'], w: 0.9, ae: 'shrink', minDur: 0.8,
+  name: '扇を閉じる', tags: ['graphic', 'editorial', 'emotional'], w: 0.9, minDur: 0.8,
   outDur: dur => J.clamp(dur * 0.44, 0.36, 0.85),
   apply(env, it, p) {
     const sz = it.size, rev = cutBit(env, 261), bend = E.inOutSine(J.clamp(p / 0.3)), close = E.inOutCubic(J.clamp((p - 0.24) / 0.5));
@@ -15499,7 +15453,7 @@ X.fanClose = {
 
 /* colour separation: the text splits into its ghost / accent channels which drift apart with a jitter and fade */
 X.rgbSplitOut = {
-  name: '色分解', tags: ['glitch', 'pop'], w: 0.9, ae: 'glitch',
+  name: '色分解', tags: ['glitch', 'pop'], w: 0.9,
   apply(env, it, p) {
     const sc = env.sc, sz = it.size, seed = it.seed | 0, step = env.step, dark = darkBg(env);
     const cols = [sc.ghostA || sc.accent, sc.ghostB || sc.fg, sc.accent];
@@ -15521,7 +15475,7 @@ X.rgbSplitOut = {
 
 /* shockwave: an implosion, then a ring bursts outward and every glyph is blown away as the ring passes it */
 X.shockOut = {
-  name: '衝撃波', tags: ['pop', 'graphic'], w: 0.9, ae: 'explode',
+  name: '衝撃波', tags: ['pop', 'graphic'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, seed = it.seed | 0, acc = env.sc.accent, single = isSingle(env, it);
     const pre = Math.sin(Math.PI * J.clamp(p / 0.16)) * (p < 0.16 ? 1 : 0);
@@ -15558,7 +15512,7 @@ X.shockOut = {
 
 /* flood: a wavy water line rises through the text; what is under water wobbles, tints and sinks out of sight */
 X.floodOut = {
-  name: '水没', tags: ['emotional', 'calm'], w: 0.9, ae: 'wipe',
+  name: '水没', tags: ['emotional', 'calm'], w: 0.9,
   outDur: dur => J.clamp(dur * 0.4, 0.32, 0.8),
   apply(env, it, p) {
     const sz = it.size, t = env.ltb, acc = env.sc.accent, c0 = colOf(it), single = isSingle(env, it), H = env.H;
@@ -15594,7 +15548,7 @@ X.floodOut = {
 
 /* one clean sword stroke: a flash along the line, a beat, then the upper half slides off along the cut */
 X.slashOut = {
-  name: '一刀両断', tags: ['graphic', 'emotional', 'pop'], w: 1, ae: 'slice',
+  name: '一刀両断', tags: ['graphic', 'emotional', 'pop'], w: 1,
   outDur: dur => J.clamp(dur * 0.4, 0.32, 0.8),
   apply(env, it, p) {
     const sz = it.size, vert = !!it.vertical, acc = env.sc.accent, b = lBox(it, sz * 0.2), seed = it.seed | 0;
@@ -15633,7 +15587,7 @@ X.slashOut = {
 /* mosaic: the text is pixelated into ever larger blocks (an off-screen low-res copy scaled up without smoothing) */
 let MOS = null;
 X.mosaicOut = {
-  name: 'モザイク', tags: ['glitch', 'graphic'], w: 0.9, ae: 'glitch',
+  name: 'モザイク', tags: ['glitch', 'graphic'], w: 0.9,
   apply(env, it, p) {
     const sz = it.size, blk = sz * (0.01 + 0.34 * Math.pow(p, 1.5));
     if (blk * (env.scale || 1) < 1.6) return;
@@ -15659,7 +15613,7 @@ X.mosaicOut = {
 
 /* scribbled out: a thick marker scrawls back and forth over each line, then text and scribble fade together */
 X.scribbleOut = {
-  name: 'ぐしゃぐしゃ消し', tags: ['editorial', 'emotional', 'pop'], w: 0.8, ae: 'wipe',
+  name: 'ぐしゃぐしゃ消し', tags: ['editorial', 'emotional', 'pop'], w: 0.8,
   outDur: dur => J.clamp(dur * 0.4, 0.32, 0.8),
   apply(env, it, p) {
     const sz = it.size, seed = it.seed | 0, vert = !!it.vertical, acc = env.sc.accent, lines = lineExt(it);
@@ -15710,7 +15664,7 @@ X.scribbleOut = {
 
 /* blown out like candles: a breath travels along the line, each glyph leans, flickers, goes out and leaves a curl of smoke */
 X.candleOut = {
-  name: '吹き消す', tags: ['emotional', 'calm'], w: 0.9, ae: 'drift',
+  name: '吹き消す', tags: ['emotional', 'calm'], w: 0.9,
   outDur: dur => J.clamp(dur * 0.45, 0.38, 0.9),
   apply(env, it, p) {
     const seed = it.seed | 0, sz = it.size, step = env.step, ord0 = orderOf(env, it), dir = cutBit(env, 321) ? 1 : -1;
@@ -15757,7 +15711,7 @@ const H = {};
 
 /* candle glow: a warm halo that breathes and gutters irregularly, with a tiny upward lick of the glyphs */
 H.glowFlicker = {
-  name: '灯火のゆらぎ', tags: ['calm', 'emotional'], w: 0.5, ae: 'breathe',
+  name: '灯火のゆらぎ', tags: ['calm', 'emotional'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const t = env.ltb, seed = it.seed | 0, sz = it.size, kk = Math.min(1, k), sy0 = it.sy || 1;
@@ -15776,7 +15730,7 @@ H.glowFlicker = {
 
 /* gusts: every couple of seconds a gust sweeps along the line, the glyphs lean and are pushed, then spring back */
 H.windGust = {
-  name: '突風', tags: ['pop', 'emotional'], w: 0.5, ae: 'wave',
+  name: '突風', tags: ['pop', 'emotional'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const cs = env.cut.seed | 0, sz = it.size, ord = orderOf(env, it);
@@ -15795,7 +15749,7 @@ H.windGust = {
 
 /* dangling: every glyph hangs from its own top edge and swings like a small pendulum, each at its own tempo */
 H.dangle = {
-  name: 'ぶら下がり', tags: ['calm', 'emotional'], w: 0.5, ae: 'wave',
+  name: 'ぶら下がり', tags: ['calm', 'emotional'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const t = env.ltb, seed = it.seed | 0, sz = it.size, sy0 = it.sy || 1, vert = !!it.vertical;
@@ -15810,7 +15764,7 @@ H.dangle = {
 
 /* equaliser: glyphs stretch up from their baseline like level-meter bars, driven by the song's loudness */
 H.eqBounce = {
-  name: '音圧で伸びる', tags: ['pop', 'graphic'], w: 0.5, ae: 'breathe',
+  name: '音圧で伸びる', tags: ['pop', 'graphic'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const t = env.ltb, seed = it.seed | 0, sz = it.size, sy0 = it.sy || 1, acc = env.sc.accent, c0 = colOf(it), vert = !!it.vertical;
@@ -15827,7 +15781,7 @@ H.eqBounce = {
 
 /* beat flash: on every beat one glyph is punched out in inverse video — an accent block with the glyph knocked out */
 H.flashBox = {
-  name: '拍で反転', tags: ['pop', 'graphic', 'glitch'], w: 0.4, ae: 'glitchtick',
+  name: '拍で反転', tags: ['pop', 'graphic', 'glitch'], w: 0.4,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.35) return;
     const len = beatLen(env, 0.62), since = beatSince(env, 0.62), idx = beatIdx(env, 0.62);
@@ -15853,7 +15807,7 @@ H.flashBox = {
 
 /* glint: now and then a slanted band of light slides across the letters */
 H.glintSweep = {
-  name: '光沢', tags: ['graphic', 'calm'], w: 0.5, ae: 'still',
+  name: '光沢', tags: ['graphic', 'calm'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.05 || env.pass !== 'main') return;
     const per = 2.4, T = env.ltb - 0.5 - (+it.mi || 0) * 0.04, u = ((T % per) + per) % per / 0.75;   // first sweep ~0.5 s into the cut
@@ -15875,7 +15829,7 @@ H.glintSweep = {
 
 /* flip swap: now and then one glyph flips over like a card, shows a stray katakana on its back, and flips home */
 H.flipSwap = {
-  name: '時々裏返る', tags: ['glitch', 'pop'], w: 0.4, ae: 'glitchtick',
+  name: '時々裏返る', tags: ['glitch', 'pop'], w: 0.4,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.5) return;
     const cs = env.cut.seed | 0, per = 1.6, T = env.ltb - 0.45, cyc = Math.floor(T / per), u = (T - cyc * per) / 0.95;
@@ -15900,7 +15854,7 @@ H.flipSwap = {
 
 /* swaying shadow: a long soft shadow that swings slowly as if the light source were moving */
 H.shadowSway = {
-  name: '影が揺れる', tags: ['calm', 'emotional'], w: 0.5, ae: 'drift',
+  name: '影が揺れる', tags: ['calm', 'emotional'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01 || it.extrude || env.pass !== 'main') return;
     const t = env.ltb, seed = it.seed | 0, sz = it.size;
@@ -15912,7 +15866,7 @@ H.shadowSway = {
 
 /* magnetism: an invisible magnet wanders round the text; nearby glyphs lean and buzz towards it */
 H.magnetJiggle = {
-  name: '磁力', tags: ['pop', 'glitch'], w: 0.4, ae: 'jitter',
+  name: '磁力', tags: ['pop', 'glitch'], w: 0.4,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const t = env.ltb, seed = it.seed | 0, sz = it.size, step = env.step;
@@ -15936,7 +15890,7 @@ H.magnetJiggle = {
 
 /* typewriter: an uneven, hand-struck baseline; on each beat a few keys are struck again — a dip, then a new resting place */
 H.typeRattle = {
-  name: 'タイプの震え', tags: ['editorial', 'glitch'], w: 0.5, ae: 'jitter',
+  name: 'タイプの震え', tags: ['editorial', 'glitch'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const idx = beatIdx(env, 0.45), since = beatSince(env, 0.45), seed = it.seed | 0, sz = it.size, kk = Math.min(1, k);
@@ -15951,7 +15905,7 @@ H.typeRattle = {
 
 /* rack focus: a plane of focus drifts along the line; glyphs away from it soften and grow slightly */
 H.focusRack = {
-  name: 'ピント送り', tags: ['calm', 'emotional'], w: 0.5, ae: 'breathe',
+  name: 'ピント送り', tags: ['calm', 'emotional'], w: 0.5,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     const ord = orderOf(env, it), t = env.ltb, seed = it.seed | 0, sz = it.size, kk = Math.min(1, k);
@@ -15967,7 +15921,7 @@ H.focusRack = {
 
 /* plucked string: the line vibrates as a standing wave between its ends, plucked again every few beats and ringing down */
 H.pluckString = {
-  name: '弦の振動', tags: ['pop', 'emotional'], w: 0.4, ae: 'wave',
+  name: '弦の振動', tags: ['pop', 'emotional'], w: 0.4,
   apply(env, it, amt) {
     const k = amt * motionK(env); if (k < 0.01) return;
     let tau;
@@ -16057,7 +16011,7 @@ const fx = (k, d) => J.register('fx', k, Object.assign({}, d, {
 }), PK);
 
 /* ================= lens / optics ================= */
-fx('radialChroma', { name: '放射色収差', tags: ['glitch', 'emotional', 'pop'], w: 0.9, dur: 4, amp: 1, mid: true, scratch: true, ae: 'chroma',
+fx('radialChroma', { name: '放射色収差', tags: ['glitch', 'emotional', 'pop'], w: 0.9, dur: 4, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const dk = isDark(sc.bg), s = evS(ev);
@@ -16070,7 +16024,7 @@ fx('radialChroma', { name: '放射色収差', tags: ['glitch', 'emotional', 'pop
     ctx.globalAlpha = 0.45; drawScaled(ctx, R, 1 + d * 2.2, cx, cy, cw, ch);
   } });
 
-fx('bloomFlash', { name: 'ブルーム', tags: ['pop', 'emotional', 'calm'], w: 1, dur: 6, amp: 1, mid: true, scratch: true, ae: 'flash',
+fx('bloomFlash', { name: 'ブルーム', tags: ['pop', 'emotional', 'calm'], w: 1, dur: 6, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const a = clamp(ampOf(ev), 0.5, 1.3) * (k < 0.12 ? E.outCubic(k / 0.12) : Math.pow(1 - (k - 0.12) / 0.88, 1.5));
@@ -16096,7 +16050,7 @@ fx('bloomFlash', { name: 'ブルーム', tags: ['pop', 'emotional', 'calm'], w: 
   } });
 
 // separable lens warp: columns then rows, piecewise-linear strips (no seams)
-fx('bulge', { name: '魚眼', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 5, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('bulge', { name: '魚眼', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 5, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const s = evS(ev), pinch = J.r(s, 1) < 0.25;
@@ -16125,7 +16079,7 @@ fx('bulge', { name: '魚眼', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 5
 
 /* ================= glitch ================= */
 // vertical "melt": runs of columns whose window is stretched down (or up), coherent via smooth noise
-fx('pixelSort', { name: 'ピクセルソート', tags: ['glitch'], w: 0.8, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true, ae: 'slice',
+fx('pixelSort', { name: 'ピクセルソート', tags: ['glitch'], w: 0.8, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const a = ampOf(ev), s = evS(ev), st = I.step * 19 + s, up = J.r(s, 1) < 0.3;
@@ -16151,7 +16105,7 @@ const rowTile = L => {
   const x = t.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, 1, L);
   ROWS.set(L, t); return t;
 };
-fx('interlace', { name: 'インターレース', tags: ['glitch', 'emotional'], w: 0.7, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true, ae: 'slice',
+fx('interlace', { name: 'インターレース', tags: ['glitch', 'emotional'], w: 0.7, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const a = ampOf(ev), st = I.step * 7 + evS(ev), L = Math.max(1, Math.round(ch / 200));
@@ -16168,7 +16122,7 @@ fx('interlace', { name: 'インターレース', tags: ['glitch', 'emotional'], 
   } });
 
 // compression artefacts: grid-aligned blocks go flat, smear down from their top row, quantise or slip
-fx('macroBlock', { name: 'ブロックノイズ', tags: ['glitch'], w: 0.8, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true, ae: 'block',
+fx('macroBlock', { name: 'ブロックノイズ', tags: ['glitch'], w: 0.8, dur: 3, amp: 1, glitchy: true, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const a = ampOf(ev), st = I.step * 23 + evS(ev), B = Math.max(6, Math.round(Math.min(cw, ch) / 18));
@@ -16215,7 +16169,7 @@ const dotTile = (c, r) => {
   if (DOT.size > 64) DOT.clear();
   DOT.set(key, t); return t;
 };
-fx('halftone', { name: '網点', tags: ['pop', 'graphic', 'editorial'], w: 0.9, dur: 5, amp: 1, mid: true, ae: 'mosaic',
+fx('halftone', { name: '網点', tags: ['pop', 'graphic', 'editorial'], w: 0.9, dur: 5, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I;
     const c = Math.max(5, Math.round(Math.min(cw, ch) / 44)), amt = ahr(k, 0.3, 0.72);
@@ -16228,7 +16182,7 @@ fx('halftone', { name: '網点', tags: ['pop', 'graphic', 'editorial'], w: 0.9, 
     ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = J.mix(sc.bg, sc.fg, 0.16); ctx.fillRect(0, 0, cw, ch);
   } });
 
-fx('duotone', { name: 'ダブルトーン', tags: ['pop', 'emotional', 'graphic'], w: 0.8, dur: 4, amp: 1, mid: true, ae: 'chroma',
+fx('duotone', { name: 'ダブルトーン', tags: ['pop', 'emotional', 'graphic'], w: 0.8, dur: 4, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev);
     const a = clamp(ampOf(ev), 0.6, 1) * ahr(k, 0.12, 0.7);
@@ -16252,7 +16206,7 @@ const bayerTile = () => {
   BAYER = c; return c;
 };
 // ordered dither → hard threshold (contrast filter) → mapped to the scheme's darkest / lightest colour
-fx('ditherBit', { name: '1bitディザ', tags: ['glitch', 'graphic', 'pop'], w: 0.7, dur: 3, amp: 1, mid: true, scratch: true, ae: 'mosaic',
+fx('ditherBit', { name: '1bitディザ', tags: ['glitch', 'graphic', 'pop'], w: 0.7, dur: 3, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const p = Math.max(2, Math.round(ch / 200) * (k < 0.34 ? 2 : 1)), w = Math.ceil(cw / p), h = Math.ceil(ch / p);
@@ -16269,7 +16223,7 @@ fx('ditherBit', { name: '1bitディザ', tags: ['glitch', 'graphic', 'pop'], w: 
   } });
 
 /* ================= frame motion ================= */
-fx('rotateSnap', { name: '傾きスナップ', tags: ['pop', 'graphic', 'glitch'], w: 0.9, dur: 5, amp: 1, mid: true, scratch: true, ae: 'shake',
+fx('rotateSnap', { name: '傾きスナップ', tags: ['pop', 'graphic', 'glitch'], w: 0.9, dur: 5, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), dir = J.r(s, 1) < 0.5 ? 1 : -1;
@@ -16286,7 +16240,7 @@ fx('rotateSnap', { name: '傾きスナップ', tags: ['pop', 'graphic', 'glitch'
   } });
 
 // stepped after-images of the frame ('lighten' on dark schemes / 'darken' on light ones keeps the background untouched)
-fx('echoFrames', { name: '残像エコー', tags: ['emotional', 'pop', 'glitch'], w: 0.9, dur: 6, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('echoFrames', { name: '残像エコー', tags: ['emotional', 'pop', 'glitch'], w: 0.9, dur: 6, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), dk = isDark(sc.bg), a = clamp(ampOf(ev), 0.5, 1.3);
@@ -16298,7 +16252,7 @@ fx('echoFrames', { name: '残像エコー', tags: ['emotional', 'pop', 'glitch']
   } });
 
 // n mirrored wedges around the centre (true kaleidoscope, not an axis mirror)
-fx('kaleido', { name: '万華鏡', tags: ['pop', 'graphic', 'emotional'], w: 0.6, dur: 4, amp: 1, mid: true, scratch: true, ae: 'block',
+fx('kaleido', { name: '万華鏡', tags: ['pop', 'graphic', 'emotional'], w: 0.6, dur: 4, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const s = evS(ev), n = J.r(s, 1) < 0.5 ? 6 : 8, th = TAU / n, R = Math.hypot(cw, ch);
@@ -16314,7 +16268,7 @@ fx('kaleido', { name: '万華鏡', tags: ['pop', 'graphic', 'emotional'], w: 0.6
   } });
 
 /* ================= inversion / light ================= */
-fx('bandInvert', { name: '帯反転', tags: ['glitch', 'graphic'], w: 0.7, dur: 3, amp: 1, glitchy: true, mid: true, ae: 'invert',
+fx('bandInvert', { name: '帯反転', tags: ['glitch', 'graphic'], w: 0.7, dur: 3, amp: 1, glitchy: true, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch } = I, s = evS(ev), st = I.step * 13 + s, n = 2 + (J.h(st, 1) % 4), vert = J.r(s, 2) < 0.22;
     const L = vert ? cw : ch, M = vert ? ch : cw, a = clamp(ampOf(ev), 0.6, 1.3);
@@ -16326,7 +16280,7 @@ fx('bandInvert', { name: '帯反転', tags: ['glitch', 'graphic'], w: 0.7, dur: 
     }
   } });
 
-fx('lightRays', { name: '光芒', tags: ['emotional', 'pop', 'calm'], w: 0.9, dur: 8, amp: 1, mid: true, ae: 'flash',
+fx('lightRays', { name: '光芒', tags: ['emotional', 'pop', 'calm'], w: 0.9, dur: 8, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev), dk = isDark(sc.bg);
     const a = clamp(ampOf(ev), 0.5, 1.2) * Math.pow(bell(k), 0.6) * (0.9 + 0.1 * J.r(I.step, 5));
@@ -16349,7 +16303,7 @@ fx('lightRays', { name: '光芒', tags: ['emotional', 'pop', 'calm'], w: 0.9, du
     ctx.fillStyle = g2; ctx.fillRect(cx - M * 0.3, cy - M * 0.3, M * 0.6, M * 0.6);
   } });
 
-fx('anamorphic', { name: 'アナモフレア', tags: ['emotional', 'pop', 'calm'], w: 0.8, dur: 7, amp: 1, mid: true, ae: 'flash',
+fx('anamorphic', { name: 'アナモフレア', tags: ['emotional', 'pop', 'calm'], w: 0.8, dur: 7, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev), dk = isDark(sc.bg);
     const a = clamp(ampOf(ev), 0.5, 1.2) * Math.pow(bell(k), 0.5) * (0.88 + 0.12 * J.r(I.step, 7));
@@ -16381,7 +16335,7 @@ fx('anamorphic', { name: 'アナモフレア', tags: ['emotional', 'pop', 'calm'
   } });
 
 // double heartbeat: a coloured vignette closes in twice with a slight push
-fx('heartbeat', { name: '鼓動', tags: ['emotional', 'calm'], w: 0.8, dur: 10, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('heartbeat', { name: '鼓動', tags: ['emotional', 'calm'], w: 0.8, dur: 10, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const pulse = (x, c, w) => { const u = (x - c) / w; return u < 0 || u > 1 ? 0 : u < 0.22 ? E.outCubic(u / 0.22) : 1 - E.inOutCubic((u - 0.22) / 0.78); };
@@ -16407,7 +16361,7 @@ const staticTex = () => {
   x.putImageData(id, 0, 0);
   STATIC = c; return c;
 };
-fx('tvStatic', { name: '砂嵐', tags: ['glitch', 'emotional'], w: 0.6, dur: 5, pre: 2, amp: 1, glitchy: true, ae: 'block',
+fx('tvStatic', { name: '砂嵐', tags: ['glitch', 'emotional'], w: 0.6, dur: 5, pre: 2, amp: 1, glitchy: true,
   draw(ctx, ev, k, I) {
     const { cw, ch } = I, st = I.step * 3 + evS(ev), b = 0.4;
     const cov = (k < b ? 0.5 + 0.5 * E.outQuad(k / b) : 1 - E.outQuad((k - b) / (1 - b))) * clamp(ampOf(ev), 0.7, 1.1);
@@ -16456,7 +16410,7 @@ fx('dustScratches', { name: 'フィルム傷', tags: ['emotional', 'calm', 'edit
 /* ================= film strip / 3D / water ================= */
 const rrect = (ctx, x, y, w, h, r) => { r = Math.min(r, w / 2, h / 2); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
 // the picture shrinks onto a strip of film with sprocket holes and the strip is pulled on by one frame
-fx('filmAdvance', { name: 'フィルム送り', tags: ['emotional', 'editorial', 'calm'], w: 0.6, dur: 9, pre: 4, amp: 1, scratch: true, ae: 'slice',
+fx('filmAdvance', { name: 'フィルム送り', tags: ['emotional', 'editorial', 'calm'], w: 0.6, dur: 9, pre: 4, amp: 1, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const s = evS(ev), dir = J.r(s, 1) < 0.7 ? 1 : -1, env = ahr(k, 0.22, 0.78, E.inOutCubic, E.inOutCubic);
@@ -16477,7 +16431,7 @@ fx('filmAdvance', { name: 'フィルム送り', tags: ['emotional', 'editorial',
   } });
 
 // the frame swings in 3D around its vertical (or horizontal) axis: projected strips form a perspective trapezoid
-fx('perspectiveTilt', { name: 'パース揺れ', tags: ['pop', 'graphic', 'emotional'], w: 0.8, dur: 8, amp: 1, mid: true, scratch: true, ae: 'shake',
+fx('perspectiveTilt', { name: 'パース揺れ', tags: ['pop', 'graphic', 'emotional'], w: 0.8, dur: 8, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), cols = J.r(s, 1) < (cw >= ch ? 0.7 : 0.35), dir = J.r(s, 2) < 0.5 ? 1 : -1;
@@ -16499,7 +16453,7 @@ fx('perspectiveTilt', { name: 'パース揺れ', tags: ['pop', 'graphic', 'emoti
   } });
 
 // water ripple: annuli around the drop point are each re-drawn slightly scaled (radial displacement)
-fx('ripple', { name: '波紋', tags: ['emotional', 'calm', 'pop'], w: 0.8, dur: 10, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('ripple', { name: '波紋', tags: ['emotional', 'calm', 'pop'], w: 0.8, dur: 10, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), cx = cw * (0.5 + J.rs(s, 1) * 0.1), cy = ch * (0.5 + J.rs(s, 2) * 0.08), M = Math.min(cw, ch), dk = isDark(sc.bg);
@@ -16527,7 +16481,7 @@ fx('ripple', { name: '波紋', tags: ['emotional', 'calm', 'pop'], w: 0.8, dur: 
 /* ================= manga / graphic overlays ================= */
 const inkCol = sc => (isDark(sc.bg) ? lightest([sc.fg, sc.ink, '#FFFFFF']) : darkest([sc.fg, sc.ink, '#111111']));
 // 集中線: thin wedges converging on the centre, redrawn every frame like hand-drawn animation
-fx('focusLines', { name: '集中線', tags: ['pop', 'graphic', 'emotional'], w: 0.9, dur: 6, amp: 1, mid: true, ae: 'zoom',
+fx('focusLines', { name: '集中線', tags: ['pop', 'graphic', 'emotional'], w: 0.9, dur: 6, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev), st = I.step * 5 + s, a = ahr(k, 0.1, 0.72);
     if (a < 0.02) return;
@@ -16566,7 +16520,7 @@ fx('speedLines', { name: '流線', tags: ['pop', 'graphic'], w: 0.8, dur: 6, amp
   } });
 
 // キラッ: 8-point glints popping in sequence around the lyric band
-fx('starGlint', { name: 'キラッ', tags: ['pop', 'emotional'], w: 0.8, dur: 9, amp: 1, mid: true, ae: 'flash',
+fx('starGlint', { name: 'キラッ', tags: ['pop', 'emotional'], w: 0.8, dur: 9, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev), dk = isDark(sc.bg), M = Math.min(cw, ch), col = vivid(sc), n = 2 + (J.h(s, 1) % 3);
     const port = ch > cw;
@@ -16591,7 +16545,7 @@ fx('starGlint', { name: 'キラッ', tags: ['pop', 'emotional'], w: 0.8, dur: 9,
   } });
 
 // thin scheme-coloured bars sweeping across the frame at different speeds
-fx('colorBars', { name: 'カラーバー', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true, ae: 'slice',
+fx('colorBars', { name: 'カラーバー', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, sc } = I, s = evS(ev), vert = J.r(s, 1) < (cw >= ch ? 0.35 : 0.15), dir = J.r(s, 2) < 0.5 ? 1 : -1;
     let cols = [sc.accent, sc.accent2, sc.ghostA, sc.ghostB, sc.fg].filter(c => c && J.contrast(c, sc.bg) > 1.35);
@@ -16609,7 +16563,7 @@ fx('colorBars', { name: 'カラーバー', tags: ['pop', 'graphic', 'glitch'], w
   } });
 
 // three hard zoom steps (ダダダン), each with its own slight focus shift, then snap back
-fx('zoomStutter', { name: 'ズーム連打', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('zoomStutter', { name: 'ズーム連打', tags: ['pop', 'graphic', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const s = evS(ev), j = Math.min(2, Math.floor(k * 3)), a = clamp(ampOf(ev), 0.5, 1.3);
@@ -16619,7 +16573,7 @@ fx('zoomStutter', { name: 'ズーム連打', tags: ['pop', 'graphic', 'glitch'],
 
 /* ================= graphic inversions / stylise ================= */
 // an inverted ring (circle or diamond) bursts out from the centre, a thinner echo ring follows
-fx('negativeRing', { name: '反転リング', tags: ['graphic', 'pop', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true, ae: 'invert',
+fx('negativeRing', { name: '反転リング', tags: ['graphic', 'pop', 'glitch'], w: 0.8, dur: 6, amp: 1, mid: true,
   draw(ctx, ev, k, I) {
     const { cw, ch } = I, s = evS(ev), M = Math.min(cw, ch), dia = J.r(s, 1) < 0.35;
     const cx = cw / 2 + J.rs(s, 2) * cw * 0.05, cy = ch / 2 + J.rs(s, 3) * ch * 0.05, Rm = Math.hypot(cw, ch) * (dia ? 0.75 : 0.56);
@@ -16636,7 +16590,7 @@ fx('negativeRing', { name: '反転リング', tags: ['graphic', 'pop', 'glitch']
 
 // edge detection: |frame - shifted frame| → neon outlines on dark schemes, ink line drawing on light ones
 const invHex = h => { const [r, g, b] = J.hex(h); return J.toHex(255 - r, 255 - g, 255 - b); };
-fx('edgeDetect', { name: '輪郭抽出', tags: ['graphic', 'glitch', 'editorial'], w: 0.7, dur: 4, amp: 1, mid: true, scratch: true, ae: 'invert',
+fx('edgeDetect', { name: '輪郭抽出', tags: ['graphic', 'glitch', 'editorial'], w: 0.7, dur: 4, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const dk = isDark(sc.bg), a = ahr(k, 0.1, 0.72);
@@ -16660,7 +16614,7 @@ fx('edgeDetect', { name: '輪郭抽出', tags: ['graphic', 'glitch', 'editorial'
   } });
 
 // glass shatter: cracks appear on the old frame, the new frame arrives in shards that drift apart and knit back together
-fx('shatter', { name: 'ガラス割れ', tags: ['glitch', 'pop', 'emotional'], w: 0.5, dur: 8, pre: 1, amp: 1, scratch: true, ae: 'block',
+fx('shatter', { name: 'ガラス割れ', tags: ['glitch', 'pop', 'emotional'], w: 0.5, dur: 8, pre: 1, amp: 1, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), M = Math.min(cw, ch), dk = isDark(sc.bg), a = clamp(ampOf(ev), 0.6, 1.3);
@@ -16701,7 +16655,7 @@ fx('shatter', { name: 'ガラス割れ', tags: ['glitch', 'pop', 'emotional'], w
   } });
 
 // rack focus: the picture drops out of focus (peak at the cut) and snaps back
-fx('defocus', { name: 'ピンぼけ', tags: ['emotional', 'calm', 'editorial'], w: 0.9, dur: 8, pre: 4, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('defocus', { name: 'ピンぼけ', tags: ['emotional', 'calm', 'editorial'], w: 0.9, dur: 8, pre: 4, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S } = I; if (!S) return;
     const amt = (k < 0.5 ? E.inOutCubic(k / 0.5) : 1 - E.inOutCubic((k - 0.5) / 0.5)) * clamp(ampOf(ev), 0.6, 1.2);
@@ -16718,7 +16672,7 @@ fx('defocus', { name: 'ピンぼけ', tags: ['emotional', 'calm', 'editorial'], 
   } });
 
 // camera shutter: white flash, the frame becomes a tilted instant photo on a dimmed backdrop, then zooms back
-fx('snapshot', { name: 'シャッター', tags: ['pop', 'emotional', 'editorial'], w: 0.6, dur: 10, amp: 1, mid: true, scratch: true, ae: 'flash',
+fx('snapshot', { name: 'シャッター', tags: ['pop', 'emotional', 'editorial'], w: 0.6, dur: 10, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), M = Math.min(cw, ch);
@@ -16738,7 +16692,7 @@ fx('snapshot', { name: 'シャッター', tags: ['pop', 'emotional', 'editorial'
   } });
 
 // elastic squash & stretch of the whole frame (damped spring)
-fx('squash', { name: '伸縮', tags: ['pop', 'graphic'], w: 0.8, dur: 6, amp: 1, mid: true, scratch: true, ae: 'zoom',
+fx('squash', { name: '伸縮', tags: ['pop', 'graphic'], w: 0.8, dur: 6, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), hor = J.r(s, 1) < 0.6;
@@ -16750,7 +16704,7 @@ fx('squash', { name: '伸縮', tags: ['pop', 'graphic'], w: 0.8, dur: 6, amp: 1,
   } });
 
 // scanner: a glowing bar sweeps the frame; what it has not reached yet is dimmed, rows just behind it jitter
-fx('scanBar', { name: 'スキャン', tags: ['graphic', 'editorial', 'glitch'], w: 0.7, dur: 8, amp: 1, mid: true, scratch: true, ae: 'flash',
+fx('scanBar', { name: 'スキャン', tags: ['graphic', 'editorial', 'glitch'], w: 0.7, dur: 8, amp: 1, mid: true, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), dk = isDark(sc.bg), down = J.r(s, 1) < 0.7, st = I.step * 3 + s;
@@ -16771,7 +16725,7 @@ fx('scanBar', { name: 'スキャン', tags: ['graphic', 'editorial', 'glitch'], 
   } });
 
 // the whole frame scrolls one full width (wrapping round) with motion blur — ends exactly where it started
-fx('loopScroll', { name: '横ループ', tags: ['pop', 'graphic', 'glitch'], w: 0.7, dur: 6, pre: 3, amp: 1, scratch: true, ae: 'slice',
+fx('loopScroll', { name: '横ループ', tags: ['pop', 'graphic', 'glitch'], w: 0.7, dur: 6, pre: 3, amp: 1, scratch: true,
   draw(ctx, ev, k, I) {
     const { cw, ch, S, sc } = I; if (!S) return;
     const s = evS(ev), vert = cw < ch ? J.r(s, 1) < 0.6 : J.r(s, 1) < 0.2, dir = J.r(s, 2) < 0.5 ? 1 : -1;
@@ -21018,7 +20972,7 @@ function tombo(env, x0, y0, x1, y1, g, L, col, lw, a) {
    1  magazine — 見開き
    ====================================================================== */
 reg('magazine', {
-  name: '見開き', tags: ['editorial', 'calm', 'emotional'], w: 0.9, ae: 'gloss', treat: 'safe', fits: n => n <= 18,
+  name: '見開き', tags: ['editorial', 'calm', 'emotional'], w: 0.9, treat: 'safe', fits: n => n <= 18,
   enterBias: { blur: 1.3, wipe: 1.3, type: 1.2, cut: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['display', 'serif', 'serif'])), qf: rng.pick(fontsOf(st, ['serif'])),
@@ -21183,7 +21137,7 @@ reg('magazine', {
    2  headlineDeck — 見出しとリード
    ====================================================================== */
 reg('headlineDeck', {
-  name: '見出しとリード', tags: ['editorial', 'graphic', 'calm'], w: 1.1, ae: 'center', fits: n => n <= 22,
+  name: '見出しとリード', tags: ['editorial', 'graphic', 'calm'], w: 1.1, fits: n => n <= 22,
   enterBias: { wipe: 1.4, slice: 1.2, stretch: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['display', 'display', 'serif'])), variant: portOf(cut) ? rng.pick(['top', 'bottom']) : rng.pick(['top', 'bottom', 'split']),
@@ -21267,7 +21221,7 @@ reg('headlineDeck', {
    3  contents — 目次
    ====================================================================== */
 reg('contents', {
-  name: '目次', tags: ['editorial', 'calm'], w: 0.9, ae: 'stack', fits: n => n >= 2 && n <= 20,
+  name: '目次', tags: ['editorial', 'calm'], w: 0.9, fits: n => n >= 2 && n <= 20,
   enterBias: { wipe: 1.5, type: 1.3, slice: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n, port = portOf(cut);
@@ -21383,7 +21337,7 @@ reg('contents', {
    4  footnote — 脚注
    ====================================================================== */
 reg('footnote', {
-  name: '脚注', tags: ['editorial', 'calm', 'emotional'], w: 0.9, ae: 'gloss', fits: n => n >= 2 && n <= 22,
+  name: '脚注', tags: ['editorial', 'calm', 'emotional'], w: 0.9, fits: n => n >= 2 && n <= 22,
   enterBias: { blur: 1.3, type: 1.3, wipe: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -21451,7 +21405,7 @@ reg('footnote', {
    ====================================================================== */
 const PROOF_NOTES = { circle: 'ママ', wave: '強調', box: '太字', dots: 'イキ' };
 reg('proofread', {
-  name: '校正刷り', tags: ['editorial', 'graphic', 'calm'], w: 0.8, ae: 'gloss', fits: n => n >= 2 && n <= 20,
+  name: '校正刷り', tags: ['editorial', 'graphic', 'calm'], w: 0.8, fits: n => n >= 2 && n <= 20,
   enterBias: { type: 1.4, blur: 1.2, cut: 1.2 },
   plan: (rng, cut, st) => {
     const all = ['circle', 'wave', 'box', 'dots'];
@@ -21570,7 +21524,7 @@ function ls0(env) { return smallSize(env); }
    6  numbered — 番号付き
    ====================================================================== */
 reg('numbered', {
-  name: '番号付き', tags: ['graphic', 'editorial', 'pop'], w: 1, ae: 'mixed', fits: n => n >= 2 && n <= 18,
+  name: '番号付き', tags: ['graphic', 'editorial', 'pop'], w: 1, fits: n => n >= 2 && n <= 18,
   enterBias: { slice: 1.3, wipe: 1.3, drop: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n, port = portOf(cut);
@@ -21664,7 +21618,7 @@ reg('numbered', {
    7  poster — ポスター
    ====================================================================== */
 reg('poster', {
-  name: 'ポスター', tags: ['graphic', 'pop', 'editorial'], w: 1, ae: 'huge', emph: 1.3, fits: n => n <= 16,
+  name: 'ポスター', tags: ['graphic', 'pop', 'editorial'], w: 1, emph: 1.3, fits: n => n <= 16,
   enterBias: { slice: 1.4, stretch: 1.3, wipe: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n, port = portOf(cut);
@@ -21766,7 +21720,7 @@ reg('poster', {
    8  swissGrid — スイスグリッド
    ====================================================================== */
 reg('swissGrid', {
-  name: 'スイスグリッド', tags: ['graphic', 'editorial', 'calm'], w: 1, ae: 'mixed', fits: n => n <= 18,
+  name: 'スイスグリッド', tags: ['graphic', 'editorial', 'calm'], w: 1, fits: n => n <= 18,
   enterBias: { wipe: 1.4, slice: 1.3, cut: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -21834,7 +21788,7 @@ reg('swissGrid', {
    9  dictionary — 辞書
    ====================================================================== */
 reg('dictionary', {
-  name: '辞書', tags: ['editorial', 'calm', 'emotional'], w: 0.9, ae: 'gloss', fits: n => n >= 1 && n <= 16,
+  name: '辞書', tags: ['editorial', 'calm', 'emotional'], w: 0.9, fits: n => n >= 1 && n <= 16,
   enterBias: { blur: 1.3, type: 1.3, wipe: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['serif', 'display'])), variant: rng.pick(['entry', 'page', 'page']), pos: rng.pick(['名', '連語', '感', '形動', '副']),
@@ -21930,7 +21884,7 @@ const slotsOf = t => [...String(t || '').trim().replace(/[\s　]+/g, ' ')];
 /* pentagon plaque (house shape) centred on (0, 0) of width w, height h */
 const emaPts = (w, h) => { const r = h * 0.26; return [[-w / 2, -h / 2 + r], [0, -h / 2], [w / 2, -h / 2 + r], [w / 2, h / 2], [-w / 2, h / 2]]; };
 reg('ema', {
-  name: '絵馬', tags: ['emotional', 'calm', 'pop'], w: 0.7, ae: 'labels', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: '絵馬', tags: ['emotional', 'calm', 'pop'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { blur: 1.3, cut: 1.3, type: 1.3, slice: 0.5, stretch: 0.5 },
   plan: (rng, cut, st) => ({
     font: rng.chance(0.55) ? rng.pick(['klee', 'brush']) : rng.pick(fontsOf(st, ['serif', 'display'])), vert: !hasLatin(cut.text) && rng.chance(0.5),
@@ -22025,7 +21979,7 @@ reg('ema', {
    11  ransom — 切り抜き文字
    ====================================================================== */
 reg('ransom', {
-  name: '切り抜き文字', tags: ['pop', 'glitch', 'graphic'], w: 0.8, ae: 'labels', treat: false, fits: n => n >= 1 && n <= 16,
+  name: '切り抜き文字', tags: ['pop', 'glitch', 'graphic'], w: 0.8, treat: false, fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 2, pop: 1.5, drop: 1.3, blur: 0.4, wipe: 0.4, slice: 0.5 },
   plan: (rng, cut, st) => {
     const fonts = [...new Set(fontsOf(st, ['display', 'serif', 'body']).concat(fontsOf(st, ['mono']), ['mincho_black', 'gothic_black', 'pop', 'dot', 'brush'].filter(f => J.FONTS[f] && rng.chance(0.35))))];
@@ -22115,7 +22069,7 @@ reg('ransom', {
    12  newspaper — 新聞
    ====================================================================== */
 reg('newspaper', {
-  name: '新聞', tags: ['editorial', 'graphic', 'pop'], w: 0.8, ae: 'tile', busy: true, treat: 'safe', emph: 1.3, fits: n => n >= 1 && n <= 16,
+  name: '新聞', tags: ['editorial', 'graphic', 'pop'], w: 0.8, busy: true, treat: 'safe', emph: 1.3, fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.4, zoom: 1.3, slice: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['display', 'serif'])), variant: hasLatin(cut.text) ? 'yoko' : rng.pick(['yoko', 'tate', 'tate']),
@@ -22242,7 +22196,7 @@ function disc(env, cx, cy, R, ang, labC, a, txt, seed, big = false) {
   env.circle(cx, cy, R * 0.022, sc.bg, null, 0, a, false);
 }
 reg('vinyl', {
-  name: 'レコード', tags: ['emotional', 'pop', 'calm'], w: 0.8, ae: 'ring', treat: 'safe', fits: n => n <= 16,
+  name: 'レコード', tags: ['emotional', 'pop', 'calm'], w: 0.8, treat: 'safe', fits: n => n <= 16,
   enterBias: { blur: 1.3, zoom: 1.2, spin: 0.4 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['display', 'serif'])), variant: cut.n <= 6 ? rng.pick(['sleeve', 'label']) : 'sleeve', side: rng.pick(['A', 'B']), rpm: rng.pick(['33⅓', '45']),
@@ -22313,7 +22267,7 @@ reg('vinyl', {
    14  cassette — カセット
    ====================================================================== */
 reg('cassette', {
-  name: 'カセット', tags: ['emotional', 'pop', 'calm'], w: 0.8, ae: 'pill', treat: 'safe', portrait: 0.7, fits: n => n <= 16,
+  name: 'カセット', tags: ['emotional', 'pop', 'calm'], w: 0.8, treat: 'safe', portrait: 0.7, fits: n => n <= 16,
   enterBias: { type: 1.6, wipe: 1.3, cut: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.chance(0.55) ? 'klee' : rng.pick(fontsOf(st, ['body', 'display'])), shell: rng.pick(['ink', 'accent', 'clear']), band: rng.pick(['accent', 'ink', 'stripe']),
@@ -22380,7 +22334,7 @@ reg('cassette', {
    15  bookSpine — 背表紙
    ====================================================================== */
 reg('bookSpine', {
-  name: '背表紙', tags: ['calm', 'editorial', 'emotional'], w: 0.8, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 14, portrait: 1.1,
+  name: '背表紙', tags: ['calm', 'editorial', 'emotional'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 14, portrait: 1.1,
   enterBias: { wipe: 1.3, blur: 1.2, cut: 1.2 },
   plan: (rng, cut, st) => {
     const port = portOf(cut);
@@ -22486,7 +22440,7 @@ reg('bookSpine', {
    16  polaroid — ポラロイド
    ====================================================================== */
 reg('polaroid', {
-  name: 'ポラロイド', tags: ['emotional', 'calm', 'pop'], w: 0.9, ae: 'labels', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: 'ポラロイド', tags: ['emotional', 'calm', 'pop'], w: 0.9, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { blur: 1.6, cut: 1.2, drop: 1.2, slice: 0.5 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -22561,7 +22515,7 @@ function perfRect(env, x, y, w, h, hole, col, a) {
   ctx.fill(); ctx.restore();
 }
 reg('stampSheet', {
-  name: '切手シート', tags: ['pop', 'graphic', 'calm'], w: 0.7, ae: 'tile', treat: 'safe', fits: n => n >= 1 && n <= 12,
+  name: '切手シート', tags: ['pop', 'graphic', 'calm'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 12,
   enterBias: { pop: 1.4, cut: 1.3, blur: 1.1 },
   plan: (rng, cut, st) => {
     const port = portOf(cut);
@@ -22637,7 +22591,7 @@ reg('stampSheet', {
    18  postcard — はがき
    ====================================================================== */
 reg('postcard', {
-  name: 'はがき', tags: ['emotional', 'calm', 'editorial'], w: 0.8, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 18,
+  name: 'はがき', tags: ['emotional', 'calm', 'editorial'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 18,
   enterBias: { blur: 1.3, type: 1.3, wipe: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.chance(0.4) ? 'klee' : rng.pick(fontsOf(st, ['serif', 'display'])), tilt: rng.range(-5, 5), val: rng.pick([63, 85, 110]),
@@ -22731,7 +22685,7 @@ reg('postcard', {
    19  letterPaper — 便箋
    ====================================================================== */
 reg('letterPaper', {
-  name: '便箋', tags: ['emotional', 'calm'], w: 0.9, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 22, portrait: 1.1,
+  name: '便箋', tags: ['emotional', 'calm'], w: 0.9, treat: 'safe', fits: n => n >= 1 && n <= 22, portrait: 1.1,
   enterBias: { type: 1.8, wipe: 1.5, blur: 1.3, slice: 0.4, stretch: 0.4 },
   plan: (rng, cut, st) => ({
     font: rng.chance(0.5) ? 'klee' : rng.pick(fontsOf(st, ['serif'])), variant: hasLatin(cut.text) ? 'yoko' : rng.pick(['tate', 'tate', 'yoko']),
@@ -22823,7 +22777,7 @@ const WD_J = '日月火水木金土', WD_E = ['SUN', 'MON', 'TUE', 'WED', 'THU',
 const MON_E = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
 const ROKUYO = ['大安', '赤口', '先勝', '友引', '先負', '仏滅'];
 reg('calendar', {
-  name: 'カレンダー', tags: ['pop', 'editorial', 'calm'], w: 0.7, ae: 'center', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: 'カレンダー', tags: ['pop', 'editorial', 'calm'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { pop: 1.3, cut: 1.3, zoom: 1.2 },
   plan: (rng, cut, st) => ({
     font: rng.pick(fontsOf(st, ['display', 'serif'])), variant: rng.pick(['month', 'himekuri']), month: rng.int(0, 11), off: rng.int(0, 6), day: rng.int(3, 27), days: rng.pick([30, 31]),
@@ -22950,7 +22904,7 @@ function lantern(env, cx, top, lw, lh, bodyC, a, glow, flick) {
   return { y0, y1, bh, hw };
 }
 reg('chochin', {
-  name: '提灯', tags: ['emotional', 'calm', 'pop'], w: 0.7, ae: 'circle', treat: 'safe', fits: n => n >= 1 && n <= 12, portrait: 1.1,
+  name: '提灯', tags: ['emotional', 'calm', 'pop'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 12, portrait: 1.1,
   enterBias: { blur: 1.4, flicker: 1.4, cut: 1.2, slice: 0.4 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -23028,7 +22982,7 @@ reg('chochin', {
    22  routeMap — 路線図
    ====================================================================== */
 reg('routeMap', {
-  name: '路線図', tags: ['graphic', 'pop', 'editorial'], w: 0.8, ae: 'labels', fits: n => n >= 2 && n <= 18,
+  name: '路線図', tags: ['graphic', 'pop', 'editorial'], w: 0.8, fits: n => n >= 2 && n <= 18,
   enterBias: { wipe: 1.4, pop: 1.3, type: 1.2 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -23129,7 +23083,7 @@ reg('routeMap', {
    23  stationSign — 駅名標
    ====================================================================== */
 reg('stationSign', {
-  name: '駅名標', tags: ['graphic', 'pop', 'editorial'], w: 0.8, ae: 'center', treat: 'safe', portrait: 0.6, fits: n => n >= 1 && n <= 12,
+  name: '駅名標', tags: ['graphic', 'pop', 'editorial'], w: 0.8, treat: 'safe', portrait: 0.6, fits: n => n >= 1 && n <= 12,
   enterBias: { cut: 1.4, wipe: 1.3, slice: 1.2 },
   plan: (rng, cut, st) => ({ font: rng.pick(fontsOf(st, ['display', 'body'])), letter: rng.pick(['JZ', 'LY', 'KT', 'SN']), num: rng.int(1, 36), band: rng.pick(['accent', 'accent2', 'ink']), posts: rng.chance(0.7) }),
   render(env) {
@@ -23196,7 +23150,7 @@ reg('stationSign', {
    24  noren — 暖簾
    ====================================================================== */
 reg('noren', {
-  name: '暖簾', tags: ['calm', 'emotional', 'graphic'], w: 0.8, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 12, portrait: 1.1,
+  name: '暖簾', tags: ['calm', 'emotional', 'graphic'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 12, portrait: 1.1,
   enterBias: { wipe: 1.5, blur: 1.3, cut: 1.2, slice: 0.4 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -23264,7 +23218,7 @@ reg('noren', {
    25  tanzaku — 短冊
    ====================================================================== */
 reg('tanzaku', {
-  name: '短冊', tags: ['emotional', 'calm', 'pop'], w: 0.7, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 16, portrait: 1.2,
+  name: '短冊', tags: ['emotional', 'calm', 'pop'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 16, portrait: 1.2,
   enterBias: { blur: 1.3, drop: 1.3, cut: 1.2, slice: 0.4, stretch: 0.4 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -23342,7 +23296,7 @@ reg('tanzaku', {
 const KUJI = ['大吉', '吉', '中吉', '小吉', '末吉', '大吉'];
 const KUJI_CAT = ['願望', '待人', '失物', '旅行', '商売', '学問', '恋愛', '健康'];
 reg('omikuji', {
-  name: 'おみくじ', tags: ['emotional', 'calm', 'editorial'], w: 0.7, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 16, portrait: 1.1,
+  name: 'おみくじ', tags: ['emotional', 'calm', 'editorial'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 16, portrait: 1.1,
   enterBias: { wipe: 1.5, blur: 1.3, type: 1.2 },
   plan: (rng, cut, st) => ({ font: rng.chance(0.4) ? 'brush' : rng.pick(fontsOf(st, ['serif'])), rank: rng.pick(KUJI), cats: KUJI_CAT.slice().sort(() => rng() - 0.5).slice(0, 4) }),
   render(env) {
@@ -23428,7 +23382,7 @@ reg('omikuji', {
    27  kakejiku — 掛け軸
    ====================================================================== */
 reg('kakejiku', {
-  name: '掛け軸', tags: ['calm', 'emotional', 'editorial'], w: 0.7, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 14, portrait: 1.3,
+  name: '掛け軸', tags: ['calm', 'emotional', 'editorial'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 14, portrait: 1.3,
   enterBias: { blur: 1.4, wipe: 1.3, cut: 1.2, slice: 0.4, stretch: 0.4 },
   plan: (rng, cut, st) => ({ font: rng.chance(0.5) ? 'brush' : rng.pick(fontsOf(st, ['serif'])), variant: portOf(cut) ? 'kake' : rng.pick(['kake', 'kake', 'yoko']), mount: rng.pick(['accent', 'ink', 'sub']), seal: rng.chance(0.7) }),
   render(env) {
@@ -23521,7 +23475,7 @@ function shojiPanel(env, x, y, w, h, paperC, woodC, a, cols, rows, glow) {
   ctx.restore();
 }
 reg('shoji', {
-  name: '障子', tags: ['calm', 'emotional', 'graphic'], w: 0.7, ae: 'center', busy: true, treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: '障子', tags: ['calm', 'emotional', 'graphic'], w: 0.7, busy: true, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { blur: 1.6, cut: 1.2, wipe: 0.6, slice: 0.4 },
   plan: (rng, cut, st) => ({ font: rng.pick(fontsOf(st, ['serif', 'display'])), variant: rng.pick(['shadow', 'open', 'shadow']), rows: rng.int(4, 6), cols: rng.int(2, 3) }),
   render(env) {
@@ -23573,7 +23527,7 @@ reg('shoji', {
    29  clapper — カチンコ
    ====================================================================== */
 reg('clapper', {
-  name: 'カチンコ', tags: ['pop', 'graphic', 'editorial'], w: 0.6, ae: 'labels', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: 'カチンコ', tags: ['pop', 'graphic', 'editorial'], w: 0.6, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.8, pop: 1.2, blur: 0.5 },
   plan: (rng, cut, st) => ({ font: rng.chance(0.5) ? 'klee' : rng.pick(fontsOf(st, ['display', 'body'])), tilt: rng.range(-6, 6), roll: 'A' + rng.int(1, 9), take: rng.int(1, 12) }),
   render(env) {
@@ -23641,7 +23595,7 @@ function warnTri(env, cx, cy, s, fill, mark, a, flash) {
   env.circle(cx, cy + s * 0.3, s * 0.065, mark, null, 0, ma, false);
 }
 reg('warningLabel', {
-  name: '警告ラベル', tags: ['graphic', 'glitch', 'pop'], w: 0.7, ae: 'pill', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: '警告ラベル', tags: ['graphic', 'glitch', 'pop'], w: 0.7, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.5, flicker: 1.5, pop: 1.3, blur: 0.5 },
   plan: (rng, cut, st) => ({ font: rng.pick(fontsOf(st, ['display'])), variant: rng.pick(['header', 'stripe', 'side']), word: rng.int(0, 3), tilt: rng.range(-3, 3) }),
   render(env) {
@@ -23701,7 +23655,7 @@ reg('warningLabel', {
    ====================================================================== */
 const yen = v => '¥' + String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 reg('priceTag', {
-  name: '値札', tags: ['pop', 'graphic'], w: 0.6, ae: 'pill', treat: 'safe', fits: n => n >= 1 && n <= 14,
+  name: '値札', tags: ['pop', 'graphic'], w: 0.6, treat: 'safe', fits: n => n >= 1 && n <= 14,
   enterBias: { pop: 1.5, cut: 1.3, drop: 1.2, slice: 0.5 },
   plan: (rng, cut, st) => {
     const price = rng.pick([980, 1280, 1980, 2480, 3300, 4980, 580, 12800]);
@@ -23781,7 +23735,7 @@ reg('priceTag', {
    32  nameTag — 名札
    ====================================================================== */
 reg('nameTag', {
-  name: '名札', tags: ['pop', 'emotional'], w: 0.6, ae: 'pill', treat: 'safe', fits: n => n >= 1 && n <= 14,
+  name: '名札', tags: ['pop', 'emotional'], w: 0.6, treat: 'safe', fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.4, type: 1.3, pop: 1.2, slice: 0.5 },
   plan: (rng, cut, st) => ({ font: rng.chance(0.6) ? 'klee' : rng.pick(fontsOf(st, ['display', 'body'])), variant: rng.pick(['hello', 'hello', 'school']), tilt: rng.range(-6, 6), grade: rng.int(1, 6), cls: rng.int(1, 4) }),
   render(env) {
@@ -23835,7 +23789,7 @@ reg('nameTag', {
    33  stickyNotes — 付箋
    ====================================================================== */
 reg('stickyNotes', {
-  name: '付箋', tags: ['pop', 'emotional', 'calm'], w: 0.8, ae: 'labels', treat: 'safe', fits: n => n >= 1 && n <= 18,
+  name: '付箋', tags: ['pop', 'emotional', 'calm'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 18,
   enterBias: { cut: 1.5, pop: 1.4, type: 1.2, slice: 0.5, stretch: 0.5 },
   plan: (rng, cut, st) => {
     const n = cut.n;
@@ -23897,7 +23851,7 @@ reg('stickyNotes', {
    34  karuta — かるた札
    ====================================================================== */
 reg('karuta', {
-  name: 'かるた札', tags: ['pop', 'emotional', 'editorial'], w: 0.6, ae: 'vcols', treat: 'safe', fits: n => n >= 1 && n <= 16,
+  name: 'かるた札', tags: ['pop', 'emotional', 'editorial'], w: 0.6, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.6, pop: 1.2, blur: 0.6, slice: 0.5 },
   plan: (rng, cut, st) => ({ font: rng.pick(fontsOf(st, ['serif', 'display'])), variant: portOf(cut) ? rng.pick(['single', 'pair']) : rng.pick(['pair', 'pair', 'single']), from: rng.pick([1, -1]), tilt: rng.range(-4, 4), art: rng.pick(['sun', 'wave', 'mount']) }),
   render(env) {
@@ -24160,7 +24114,7 @@ const cubeFaces = (cx, cy, h, th, ph) => {
   return faces;
 };
 reg('cube', {
-  name: '立方体', tags: ['graphic', 'pop'], w: 0.8, treat: 'safe', emph: 1.2, ae: 'pill', fits: n => n >= 1 && n <= 16,
+  name: '立方体', tags: ['graphic', 'pop'], w: 0.8, treat: 'safe', emph: 1.2, fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.6, blur: 1.2, pop: 1.1, slice: 0.4, wipe: 0.5, stretch: 0.5 },
   plan(rng, cut, st) {
     const n = cut.n;
@@ -24252,7 +24206,7 @@ reg('cube', {
 
 /* ================================================================== 2 cylinder — 円筒 */
 reg('cylinder', {
-  name: '円筒', tags: ['graphic', 'calm', 'emotional'], w: 0.9, ae: 'ring', fits: n => n >= 2 && n <= 16,
+  name: '円筒', tags: ['graphic', 'calm', 'emotional'], w: 0.9, fits: n => n >= 2 && n <= 16,
   enterBias: { cut: 1.4, blur: 1.3, slice: 0.3, wipe: 0.4, stretch: 0.5 },
   plan(rng, cut, st) {
     return {
@@ -24354,7 +24308,7 @@ reg('cylinder', {
 
 /* ================================================================== 3 flipCards — カード列 */
 reg('flipCards', {
-  name: 'カードめくり', tags: ['pop', 'graphic'], w: 0.8, treat: 'safe', ae: 'labels', fits: n => n >= 1 && n <= 14,
+  name: 'カードめくり', tags: ['pop', 'graphic'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 3, pop: 0.8, blur: 0.5, slice: 0.2, wipe: 0.2, stretch: 0.3, assemble: 0.2 },
   plan(rng, cut, st) {
     return {
@@ -24452,7 +24406,7 @@ reg('flipCards', {
 
 /* ================================================================== 4 accordion — 蛇腹 */
 reg('accordion', {
-  name: '蛇腹', tags: ['pop', 'graphic', 'editorial'], w: 0.8, treat: 'safe', ae: 'labels', fits: n => n >= 2 && n <= 16,
+  name: '蛇腹', tags: ['pop', 'graphic', 'editorial'], w: 0.8, treat: 'safe', fits: n => n >= 2 && n <= 16,
   enterBias: { cut: 2, blur: 1, pop: 0.8, slice: 0.3, wipe: 0.4 },
   plan(rng, cut, st) {
     const port = cut.H > cut.W * 1.08;
@@ -24531,7 +24485,7 @@ reg('accordion', {
 
 /* ================================================================== 5 flag — はためく旗 */
 reg('flag', {
-  name: 'はためく旗', tags: ['emotional', 'pop', 'graphic'], w: 0.8, treat: 'safe', ae: 'wave', fits: n => n >= 1 && n <= 16,
+  name: 'はためく旗', tags: ['emotional', 'pop', 'graphic'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.6, blur: 1.2, pop: 0.6, slice: 0.3, wipe: 0.6 },
   plan(rng, cut, st) {
     return {
@@ -24629,7 +24583,7 @@ reg('flag', {
 
 /* ================================================================== 6 ribbon — リボン */
 reg('ribbon', {
-  name: 'リボン', tags: ['pop', 'emotional', 'graphic'], w: 0.9, treat: 'safe', portrait: 0.7, ae: 'wave', fits: n => n >= 2 && n <= 16,
+  name: 'リボン', tags: ['pop', 'emotional', 'graphic'], w: 0.9, treat: 'safe', portrait: 0.7, fits: n => n >= 2 && n <= 16,
   enterBias: { cut: 1.8, blur: 1.2, pop: 0.8, slice: 0.3, stretch: 0.4 },
   plan(rng, cut, st) {
     return {
@@ -24729,7 +24683,7 @@ reg('ribbon', {
 
 /* ================================================================== 7 pendulum — 振り子 */
 reg('pendulum', {
-  name: '振り子', tags: ['calm', 'pop', 'emotional'], w: 0.8, treat: 'safe', portrait: 1.2, ae: 'labels', fits: n => n >= 1 && n <= 16,
+  name: '振り子', tags: ['calm', 'pop', 'emotional'], w: 0.8, treat: 'safe', portrait: 1.2, fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 2, drop: 1.4, pop: 1.2, blur: 0.8, slice: 0.2, wipe: 0.3, stretch: 0.3 },
   plan(rng, cut, st) {
     const n = cut.n, port = cut.H > cut.W * 1.08, spaced = /\s/.test(String(cut.text).trim());
@@ -24847,7 +24801,7 @@ reg('pendulum', {
 
 /* ================================================================== 8 pile — 文字の山 */
 reg('pile', {
-  name: '文字の山', tags: ['pop', 'emotional', 'graphic'], w: 0.8, ae: 'scatter', fits: n => n >= 1 && n <= 14,
+  name: '文字の山', tags: ['pop', 'emotional', 'graphic'], w: 0.8, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2.4, drop: 1.2, pop: 0.8, slice: 0.2, wipe: 0.2, stretch: 0.3, assemble: 0.4 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), hf: rng.pick(fontsOf(st, ['body', 'display', 'serif'])), peak: rng.range(-0.12, 0.12), hgt: rng.range(0.26, 0.34), order: rng.pick(['ltr', 'random', 'random']), dust: rng.chance(0.7) };
@@ -24942,7 +24896,7 @@ reg('pile', {
 
 /* ================================================================== 9 blocks — 積み木 */
 reg('blocks', {
-  name: '積み木', tags: ['pop', 'graphic'], w: 0.8, treat: 'safe', ae: 'labels', fits: n => n >= 1 && n <= 14,
+  name: '積み木', tags: ['pop', 'graphic'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2.5, drop: 1.4, pop: 1, blur: 0.4, slice: 0.2, wipe: 0.2, stretch: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), deco: rng.chance(0.75), tilt: rng.chance(0.5), hop: rng.chance(0.7), side: rng.pick([1, -1]), colOff: rng.int(0, 5) };
@@ -25034,7 +24988,7 @@ reg('blocks', {
 
 /* ================================================================== 10 balloons — 文字風船 */
 reg('balloons', {
-  name: '文字風船', tags: ['pop', 'emotional', 'calm'], w: 0.8, treat: false, ae: 'scatter', fits: n => n >= 1 && n <= 14,
+  name: '文字風船', tags: ['pop', 'emotional', 'calm'], w: 0.8, treat: false, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.8, pop: 1.5, drop: 0.6, blur: 0.8, slice: 0.2, wipe: 0.2, assemble: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), tie: rng.pick(['bunch', 'bunch', 'free']), arc: rng.range(0.02, 0.06), colOff: rng.int(0, 4), mono: rng.chance(0.3) };
@@ -25103,7 +25057,7 @@ reg('balloons', {
 /* ================================================================== 11 magnets — マグネット文字 */
 const DECOY = 'ABCDEFGHKMNPRSTXYZ0123456789★♥♪?!';
 reg('magnets', {
-  name: 'マグネット', tags: ['pop', 'graphic'], w: 0.7, treat: false, busy: true, ae: 'scatter', fits: n => n >= 1 && n <= 14,
+  name: 'マグネット', tags: ['pop', 'graphic'], w: 0.7, treat: false, busy: true, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2.5, pop: 1.3, drop: 0.8, slice: 0.2, wipe: 0.2, stretch: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), df: rng.pick(fontsOf(st, ['display', 'body'])), decoys: rng.int(6, 11), handle: rng.pick([1, -1]), colOff: rng.int(0, 4), tilt: rng.range(6, 12) };
@@ -25183,7 +25137,7 @@ reg('magnets', {
 const LPTS = { A: 1, B: 3, C: 3, D: 2, E: 1, F: 4, G: 2, H: 4, I: 1, J: 8, K: 5, L: 1, M: 3, N: 1, O: 1, P: 3, Q: 10, R: 1, S: 1, T: 1, U: 1, V: 4, W: 4, X: 8, Y: 4, Z: 10 };
 const tilePts = ch => { const up = ch.toUpperCase(); if (LPTS[up]) return LPTS[up]; if (J.isKanji(ch)) return 3 + (J.sid(ch) % 8); if (J.isSmallKana(ch)) return 5; if (J.isPunct(ch)) return 0; if (J.isKata(ch)) return 2 + (J.sid(ch) % 2); return 1 + (J.sid(ch) % 3); };
 reg('tiles', {
-  name: '文字タイル', tags: ['pop', 'editorial', 'graphic'], w: 0.7, treat: 'safe', portrait: 0.7, ae: 'labels', fits: n => n >= 1 && n <= 14,
+  name: '文字タイル', tags: ['pop', 'editorial', 'graphic'], w: 0.7, treat: 'safe', portrait: 0.7, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 3, pop: 0.8, blur: 0.4, slice: 0.2, wipe: 0.2, stretch: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), from: rng.pick(['right', 'right', 'drop']), rack: rng.pick(['accent', 'ink', 'sub']), score: rng.chance(0.75) };
@@ -25278,7 +25232,7 @@ const rrPts = (x, y, w, h, r, nc = 5) => {
 
 /* ================================================================== 13 bulbs — 電球サイン */
 reg('bulbs', {
-  name: '電球サイン', tags: ['pop', 'emotional', 'graphic'], w: 0.8, treat: 'safe', emph: 1.3, ae: 'center', fits: n => n >= 1 && n <= 14,
+  name: '電球サイン', tags: ['pop', 'emotional', 'graphic'], w: 0.8, treat: 'safe', emph: 1.3, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.8, flicker: 1.6, pop: 1.2, blur: 0.6, slice: 0.3, wipe: 0.4 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), shape: rng.pick(['board', 'board', 'arrow', 'double']), chase: rng.pick(['chase', 'chase', 'alt', 'wave']), dir: rng.pick([1, -1]), sub: rng.chance(0.6) };
@@ -25371,7 +25325,7 @@ const ledTile = (kind, col, bg, T) => {
   return cv;
 };
 reg('ledScroll', {
-  name: '電光掲示板', tags: ['pop', 'graphic', 'glitch'], w: 0.8, treat: false, portrait: 1.1, ae: 'marquee', fits: n => n >= 1 && n <= 24,
+  name: '電光掲示板', tags: ['pop', 'graphic', 'glitch'], w: 0.8, treat: false, portrait: 1.1, fits: n => n >= 1 && n <= 24,
   enterBias: { cut: 4, flicker: 0.8, type: 0.4, blur: 0.2, slice: 0.1, wipe: 0.2, assemble: 0.1, scramble: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(['dot', 'dot', ...fontsOf(st, ['display', 'body'])]), col: rng.pick(['accent', 'accent', 'fg', 'accent2']), info: rng.pick(['top', 'bottom', 'none', 'bottom']), mods: rng.int(3, 6), y: rng.pick([0.5, 0.5, 0.42, 0.58]) };
@@ -25450,7 +25404,7 @@ reg('ledScroll', {
 
 /* ================================================================== 15 billboard — 看板 */
 reg('billboard', {
-  name: '看板', tags: ['pop', 'emotional', 'graphic'], w: 0.8, treat: 'safe', ae: 'center', fits: n => n >= 1 && n <= 16,
+  name: '看板', tags: ['pop', 'emotional', 'graphic'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.6, flicker: 1.5, blur: 1, pop: 0.8, slice: 0.4, wipe: 0.6 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), face: rng.pick(['light', 'light', 'accent']), lamps: rng.int(3, 4), sweep: rng.range(8, 16), tag: rng.chance(0.7) };
@@ -25529,7 +25483,7 @@ reg('billboard', {
 /* ================================================================== 16 crowdBubbles — 吹き出しの群れ */
 const REACT = ['…', '！？', '♪', '？', '！', '…！', '♡'];
 reg('crowdBubbles', {
-  name: '吹き出しの群れ', tags: ['pop', 'emotional', 'editorial'], w: 0.8, busy: true, treat: 'safe', ae: 'labels', fits: n => n >= 1 && n <= 16,
+  name: '吹き出しの群れ', tags: ['pop', 'emotional', 'editorial'], w: 0.8, busy: true, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.8, pop: 1.6, blur: 0.8, slice: 0.3, wipe: 0.4 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'body'])), sf: rng.pick(fontsOf(st, ['body', 'display'])), big: rng.pick(['round', 'round', 'rect', 'shout']), style: rng.pick(['mixed', 'outline', 'filled']), count: rng.int(10, 16), side: rng.pick([1, -1]) };
@@ -25599,7 +25553,7 @@ reg('crowdBubbles', {
 
 /* ================================================================== 17 crossword — クロスワード */
 reg('crossword', {
-  name: 'クロスワード', tags: ['editorial', 'graphic', 'pop'], w: 0.7, treat: 'safe', portrait: 0.7, ae: 'type', fits: n => n >= 2 && n <= 16,
+  name: 'クロスワード', tags: ['editorial', 'graphic', 'pop'], w: 0.7, treat: 'safe', portrait: 0.7, fits: n => n >= 2 && n <= 16,
   enterBias: { cut: 3, type: 0.6, flicker: 0.6, blur: 0.4, slice: 0.2, wipe: 0.2, stretch: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), dens: rng.range(0.14, 0.22), fill: rng.int(2, 3), clue: rng.chance(0.8) };
@@ -25708,7 +25662,7 @@ reg('crossword', {
 
 /* ================================================================== 18 wordSearch — 文字探し */
 reg('wordSearch', {
-  name: '文字探し', tags: ['pop', 'graphic', 'editorial'], w: 0.7, treat: 'safe', ae: 'tile', fits: n => n >= 2 && n <= 14,
+  name: '文字探し', tags: ['pop', 'graphic', 'editorial'], w: 0.7, treat: 'safe', fits: n => n >= 2 && n <= 14,
   enterBias: { cut: 3, flicker: 0.8, blur: 0.6, slice: 0.2, wipe: 0.2, stretch: 0.2, assemble: 0.3 },
   plan(rng, cut, st) {
     const port = cut.H > cut.W * 1.08, n = cut.n;
@@ -25813,7 +25767,7 @@ const jigPath = (ctx, x, y, w, h, t, r, b, l) => {
   ctx.moveTo(x, y); jigEdge(ctx, x, y, x + w, y, t); jigEdge(ctx, x + w, y, x + w, y + h, r); jigEdge(ctx, x + w, y + h, x, y + h, b); jigEdge(ctx, x, y + h, x, y, l); ctx.closePath();
 };
 reg('puzzle', {
-  name: 'パズル', tags: ['pop', 'graphic', 'emotional'], w: 0.8, treat: 'safe', ae: 'center', fits: n => n >= 1 && n <= 16,
+  name: 'パズル', tags: ['pop', 'graphic', 'emotional'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 3, blur: 0.5, pop: 0.4, slice: 0.2, wipe: 0.2, stretch: 0.2, assemble: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), plate: rng.pick(['accent', 'light', 'ink']), rows: rng.pick([2, 2, 3]), last: rng.chance(0.65), spread: rng.range(0.6, 1) };
@@ -25904,7 +25858,7 @@ reg('puzzle', {
 
 /* ================================================================== 20 shadowPlay — 影絵 */
 reg('shadowPlay', {
-  name: '影絵', tags: ['emotional', 'calm', 'graphic'], w: 0.9, ae: 'stack', fits: n => n >= 1 && n <= 14,
+  name: '影絵', tags: ['emotional', 'calm', 'graphic'], w: 0.9, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.2, blur: 1.3, drop: 1.2, pop: 0.6, slice: 0.4 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'display', 'serif'])), mode: rng.pick(['floor', 'floor', 'wall']), dir: rng.pick([1, -1]), sweep: rng.range(0.7, 1), sun: rng.chance(0.8) };
@@ -25979,7 +25933,7 @@ reg('shadowPlay', {
 
 /* ================================================================== 21 kaleido — 万華鏡 */
 reg('kaleido', {
-  name: '万華鏡', tags: ['glitch', 'emotional', 'graphic'], w: 0.8, busy: true, ae: 'ring', fits: n => n >= 1 && n <= 14,
+  name: '万華鏡', tags: ['glitch', 'emotional', 'graphic'], w: 0.8, busy: true, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.4, zoom: 1.4, spin: 1.3, blur: 1.2, slice: 0.3, wipe: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), N: rng.pick([6, 8, 8, 10, 12]), speed: rng.range(4, 10) * rng.pick([1, -1]), flow: rng.range(0.15, 0.3), center: rng.pick(['disc', 'disc', 'band']), tint: rng.pick(['sub', 'accent', 'mixed']) };
@@ -26040,7 +25994,7 @@ reg('kaleido', {
 /* ================================================================== 22 dominoes — ドミノ */
 const PIPS = [[], [[0, 0]], [[-1, -1], [1, 1]], [[-1, -1], [0, 0], [1, 1]], [[-1, -1], [1, -1], [-1, 1], [1, 1]], [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]]];
 reg('dominoes', {
-  name: 'ドミノ', tags: ['pop', 'graphic'], w: 0.7, treat: 'safe', portrait: 0.7, ae: 'labels', fits: n => n >= 2 && n <= 14,
+  name: 'ドミノ', tags: ['pop', 'graphic'], w: 0.7, treat: 'safe', portrait: 0.7, fits: n => n >= 2 && n <= 14,
   enterBias: { cut: 3, blur: 0.5, pop: 0.6, slice: 0.2, wipe: 0.2, stretch: 0.2, drop: 0.5 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), face: rng.pick(['light', 'light', 'ink']), pips: rng.chance(0.8) };
@@ -26105,7 +26059,7 @@ reg('dominoes', {
 
 /* ================================================================== 23 burst — 爆発プレート */
 reg('burst', {
-  name: 'ドカン', tags: ['pop', 'graphic', 'emotional'], w: 0.8, treat: 'safe', emph: 1.6, ae: 'circle', fits: n => n >= 1 && n <= 12,
+  name: 'ドカン', tags: ['pop', 'graphic', 'emotional'], w: 0.8, treat: 'safe', emph: 1.6, fits: n => n >= 1 && n <= 12,
   enterBias: { cut: 1.6, pop: 1.6, zoom: 1.4, blur: 0.5, slice: 0.3, wipe: 0.3, type: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), spikes: rng.int(13, 19), sharp: rng.range(0.66, 0.78), tilt: rng.range(-9, 9), lines: rng.chance(0.75), debris: rng.chance(0.8), order: rng.pick(['accent', 'ink']) };
@@ -26166,7 +26120,7 @@ reg('burst', {
 
 /* ================================================================== 24 fisheye — 魚眼 */
 reg('fisheye', {
-  name: '魚眼レンズ', tags: ['pop', 'graphic', 'glitch'], w: 0.8, portrait: 0.7, ae: 'mixed', fits: n => n >= 3 && n <= 16,
+  name: '魚眼レンズ', tags: ['pop', 'graphic', 'glitch'], w: 0.8, portrait: 0.7, fits: n => n >= 3 && n <= 16,
   enterBias: { cut: 1.4, blur: 1.2, pop: 1, slice: 0.4, wipe: 0.6, type: 0.8 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), mode: rng.pick(['sweep', 'sweep', 'pingpong']), glass: rng.pick(['lens', 'lens', 'grid', 'none']), amp: rng.range(0.7, 1.1) };
@@ -26234,7 +26188,7 @@ reg('fisheye', {
 
 /* ================================================================== 25 wall — 壁面パース */
 reg('wall', {
-  name: '壁面パース', tags: ['graphic', 'editorial', 'emotional'], w: 0.8, busy: true, portrait: 0.6, ae: 'diag', fits: n => n >= 1 && n <= 16,
+  name: '壁面パース', tags: ['graphic', 'editorial', 'emotional'], w: 0.8, busy: true, portrait: 0.6, fits: n => n >= 1 && n <= 16,
   enterBias: { cut: 1.6, blur: 1.2, wipe: 1, slice: 0.5, pop: 0.4 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'display', 'serif'])), side: rng.pick([1, -1]), yaw: rng.range(36, 46), orbit: rng.range(8, 14), stripe: rng.chance(0.7), eye: rng.range(-0.06, 0.06), tone: rng.pick(['plate', 'plain']) };
@@ -26318,7 +26272,7 @@ reg('wall', {
 
 /* ================================================================== 26 origami — 折り紙 */
 reg('origami', {
-  name: '折り紙', tags: ['calm', 'pop', 'emotional'], w: 0.8, treat: 'safe', ae: 'circle', fits: n => n >= 1 && n <= 14,
+  name: '折り紙', tags: ['calm', 'pop', 'emotional'], w: 0.8, treat: 'safe', fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2.5, blur: 0.8, pop: 0.6, slice: 0.2, wipe: 0.3 },
   plan(rng, cut, st) {
     const port = cut.H > cut.W * 1.08;
@@ -26412,7 +26366,7 @@ reg('origami', {
 
 /* ================================================================== 27 zipper — ジッパー */
 reg('zipper', {
-  name: 'ジッパー', tags: ['pop', 'graphic', 'emotional'], w: 0.7, busy: true, ae: 'center', portrait: 1.1, fits: n => n >= 1 && n <= 14,
+  name: 'ジッパー', tags: ['pop', 'graphic', 'emotional'], w: 0.7, busy: true, portrait: 1.1, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2, blur: 1, pop: 0.8, slice: 0.3, wipe: 0.5 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), cloth: rng.pick(['ink', 'accent', 'ink']), dir: rng.pick([1, -1]), stitch: rng.chance(0.8) };
@@ -26490,7 +26444,7 @@ reg('zipper', {
 
 /* ================================================================== 28 sliceStack — スライス積層 */
 reg('sliceStack', {
-  name: 'スライス積層', tags: ['glitch', 'graphic', 'pop'], w: 0.9, emph: 1.2, ae: 'stack', fits: n => n >= 1 && n <= 14,
+  name: 'スライス積層', tags: ['glitch', 'graphic', 'pop'], w: 0.9, emph: 1.2, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2, blur: 0.8, flicker: 0.8, slice: 0.2, wipe: 0.4 },
   plan(rng, cut, st) {
     const mode = rng.pick(['blinds', 'blinds', 'stack', 'wave']);
@@ -26577,7 +26531,7 @@ reg('sliceStack', {
 
 /* ================================================================== 29 glitchGrid — グリッチ格子 */
 reg('glitchGrid', {
-  name: 'グリッチ格子', tags: ['glitch', 'graphic'], w: 0.8, busy: true, ae: 'tile', fits: n => n >= 1 && n <= 14,
+  name: 'グリッチ格子', tags: ['glitch', 'graphic'], w: 0.8, busy: true, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 2.5, flicker: 1.5, scramble: 1.2, blur: 0.4, slice: 0.8, wipe: 0.3 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), rate: rng.int(3, 6), inv: rng.range(0.1, 0.22), labels: rng.chance(0.75), gut: rng.range(0.008, 0.016) };
@@ -26654,7 +26608,7 @@ const mosaicSample = (text, font, D, lead) => memo('mos|' + text + '|' + font + 
   return { cols, rows, lit };
 });
 reg('mosaicTiles', {
-  name: 'タイル画', tags: ['pop', 'graphic', 'glitch'], w: 0.7, treat: false, ae: 'center', fits: n => n >= 1 && n <= 12,
+  name: 'タイル画', tags: ['pop', 'graphic', 'glitch'], w: 0.7, treat: false, fits: n => n >= 1 && n <= 12,
   enterBias: { cut: 3, flicker: 0.8, blur: 0.3, slice: 0.2, wipe: 0.3, assemble: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), D: rng.int(9, 12), wave: rng.pick(['diag', 'random', 'center']), rot: rng.chance(0.4), col: rng.pick(['fg', 'accent', 'fg']), floor: rng.chance(0.75) };
@@ -26738,7 +26692,7 @@ const tileCv = (key, w, h, paint) => {
   return cv;
 };
 reg('maskReveal', {
-  name: '文字窓', tags: ['graphic', 'pop', 'emotional'], w: 0.9, treat: false, emph: 1.3, ae: 'huge', fits: n => n >= 1 && n <= 12,
+  name: '文字窓', tags: ['graphic', 'pop', 'emotional'], w: 0.9, treat: false, emph: 1.3, fits: n => n >= 1 && n <= 12,
   enterBias: { cut: 1.4, blur: 1.2, wipe: 1.2, slice: 0.8, stretch: 0.8, pop: 0.6, assemble: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), scene: rng.pick(['stripes', 'lines', 'dots', 'shine', 'stripes']), ang: rng.range(20, 35) * rng.pick([1, -1]), speed: rng.range(0.6, 1.2), rim: rng.chance(0.65), label: rng.chance(0.6) };
@@ -26802,7 +26756,7 @@ reg('maskReveal', {
 
 /* ================================================================== 32 contour — 等高線 */
 reg('contour', {
-  name: '等高線', tags: ['calm', 'graphic', 'emotional'], w: 0.9, ae: 'huge', fits: n => n >= 1 && n <= 16,
+  name: '等高線', tags: ['calm', 'graphic', 'emotional'], w: 0.9, fits: n => n >= 1 && n <= 16,
   enterBias: { blur: 1.3, cut: 1.2, wipe: 1, slice: 0.6 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display', 'serif'])), fb: rng.pick(fontsOf(st, ['display'])), side: rng.pick([1, -1]), rings: rng.int(4, 6), speed: rng.range(0.25, 0.5), col: rng.pick(['sub', 'accent', 'sub']), place: rng.pick(['low', 'center', 'low']) };
@@ -26870,7 +26824,7 @@ const coverage = (text, font, lead, track) => memo('cov|' + text + '|' + font + 
   return { S, cw, ch, a };
 });
 reg('halftoneBig', {
-  name: '網点巨大文字', tags: ['pop', 'graphic', 'editorial'], w: 0.9, treat: false, emph: 1.3, ae: 'huge', fits: n => n >= 1 && n <= 10,
+  name: '網点巨大文字', tags: ['pop', 'graphic', 'editorial'], w: 0.9, treat: false, emph: 1.3, fits: n => n >= 1 && n <= 10,
   enterBias: { cut: 1.6, blur: 1, wipe: 1, slice: 0.6, stretch: 0.6, assemble: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), mode: rng.pick(['duo', 'duo', 'tone']), ang: rng.range(15, 40) * rng.pick([1, -1]), shape: rng.pick(['dot', 'dot', 'line']), speed: rng.range(0.4, 0.8), crop: rng.chance(0.35) };
@@ -26924,7 +26878,7 @@ reg('halftoneBig', {
 
 /* ================================================================== 34 stencil — ステンシル */
 reg('stencil', {
-  name: 'ステンシル', tags: ['graphic', 'pop', 'editorial'], w: 0.8, treat: false, ae: 'center', fits: n => n >= 1 && n <= 14,
+  name: 'ステンシル', tags: ['graphic', 'pop', 'editorial'], w: 0.8, treat: false, fits: n => n >= 1 && n <= 14,
   enterBias: { cut: 1.8, wipe: 1.4, blur: 0.8, slice: 0.4, pop: 0.4, assemble: 0.2 },
   plan(rng, cut, st) {
     return { font: rng.pick(fontsOf(st, ['display'])), col: rng.pick(['accent', 'fg', 'accent']), drips: rng.int(1, 3), marks: rng.chance(0.75), dir: rng.pick([1, -1]), tilt: rng.range(-3, 3) };
@@ -30688,7 +30642,7 @@ function baseName() {
   const k = J.keyMode(S.project);
   return ((S.project.title || 'jizura').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60) || 'jizura') + (k ? (k === 'green' ? '_greenback' : '_blackback') : '');
 }
-const canPickFile = () => typeof window.showSaveFilePicker === 'function' && !document.documentElement.classList.contains('cep') && typeof VideoEncoder !== 'undefined';
+const canPickFile = () => typeof window.showSaveFilePicker === 'function' && typeof VideoEncoder !== 'undefined';
 async function runExport(kind) {
   if (S.exporting) return;
   // 大きな動画用: the save dialog must open straight from the click (before anything is awaited)
@@ -30951,7 +30905,6 @@ function bind() {
   document.querySelectorAll('.terms-open').forEach(b => b.addEventListener('click', openTerms));
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close ? dlg.close() : dlg.removeAttribute('open'); });   // click on the backdrop
   $('btnSave').addEventListener('click', () => J.saveFile(baseName() + '.jizura.json', JSON.stringify(S.project, null, 1)));
-  $('btnAE').addEventListener('click', () => J.saveFile(baseName() + rangeSuffix() + '_ae.json', JSON.stringify(J.planForAE(S.plan, S.project, exportRange()), null, 1)));
   audioNameDefault = $('audioName').textContent;
   $('btnClearLyrics').addEventListener('click', clearLyrics);
   $('btnReset').addEventListener('click', () => {
@@ -30985,7 +30938,7 @@ function bind() {
   bindFollow();
 }
 
-/* song file -> beat analysis (file input, or a host such as the After Effects panel) */
+/* song file -> beat analysis */
 let audioSeq = 0;
 async function loadAudioFile(f, restored) {
   const my = ++audioSeq;                      // only the latest choice may win (an earlier, slower analysis is dropped)
@@ -31084,7 +31037,7 @@ function boot() {
   setMode(mode); commit();
   bindTour();
   let seen = false; try { seen = localStorage.getItem('jizura.tourDone') === '1'; } catch (e) {}
-  if (!seen && S.mode === 'easy' && !window.__adobe_cep__) setTimeout(tourStart, 600);   // first visit: show the tour once
+  if (!seen && S.mode === 'easy') setTimeout(tourStart, 600);   // first visit: show the tour once
   // open on a representative frame (end of the first cut's entrance)
   const c0 = S.plan.cuts.find(c => c.line >= 0);
   if (c0) seek(c0.start + Math.min(c0.dur * 0.6, c0.inDur + 0.25));
@@ -31094,8 +31047,6 @@ function boot() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 J.ui = S;
-// hooks for hosts that embed the app (the After Effects CEP panel)
-J.uiApi = { toast, replan, syncUI, pause, seek, flushSave, loadAudioFile, restartPreview, exportRange, exportRangeLines };
 })();
 
 </script>

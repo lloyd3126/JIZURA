@@ -1,14 +1,14 @@
-"""Check a translation module: every English glossary key is translated and no Japanese is left on the page.
+"""Check a browser translation module: every active Japanese source key is translated and no Japanese is left on the page.
 usage: python3 tools/check_i18n.py zh-Hant"""
 import os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT); os.chdir(ROOT)
-from app import english as E, i18n
+from app import i18n, i18n_keys
 code = sys.argv[1]
 m = i18n.module(code)
 bad = 0
 for sec in ('BODY', 'UI', 'EXPORT'):
-    miss = [k for k in getattr(E, sec) if k not in getattr(m, sec)]
+    miss = [k for k in i18n_keys.KEYS[sec] if k not in getattr(m, sec)]
     if miss: bad += len(miss); print(sec, 'missing', len(miss), miss[:10])
 for k in ('STYLES', 'MOODS', 'SAMPLE', 'TITLE', 'DESCRIPTION'):
     if not getattr(m, k, None): bad += 1; print('missing', k)

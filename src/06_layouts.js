@@ -1,6 +1,6 @@
 /* ============================================================
    JIZURA — layouts (how a chunk of lyric is composed on screen)
-   plan(rng, cut, st)  -> params stored in the cut (also exported to AE)
+   plan(rng, cut, st)  -> params stored in the cut
    render(env)         -> draws; returns bbox of the main text for decor
    ============================================================ */
 (() => {
