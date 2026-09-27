@@ -15,7 +15,53 @@ const ICON = {
   range: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 3v10M13 3v10"/><path d="M5.5 8h5M8.5 5.5L11 8l-2.5 2.5"/></svg>',
 };
 
-const S = { project: null, plan: null, audio: null, renderer: new J.Renderer(), playing: false, t: 0, t0: 0, loop: true, need: true, exporting: null, tap: null, slow: false, lineEls: [], curLine: -2 };
+const S = { project: null, plan: null, audio: null, renderer: new J.Renderer(), playing: false, t: 0, t0: 0, loop: 'all', loopHold: null, need: true, exporting: null, tap: null, slow: false, lineEls: [], curLine: -2 };
+const LOOP_CYCLE = ['all', 'line', 'cut', false];
+const LOOP_COPY = {
+  all: { label: 'ループ', title: '全体を繰り返し' },
+  line: { label: '行ループ', title: 'この行を繰り返し' },
+  cut: { label: 'カットループ', title: 'このカットを繰り返し' },
+  off: { label: 'ループ', title: '繰り返しなし' },
+};
+function cutAround(t) {
+  const cut = J.cutAt(S.plan, t);
+  if (cut) return cut;
+  let answer = null;
+  for (const item of S.plan.cuts) { if (item.start <= t) answer = item; else break; }
+  return answer;
+}
+function loopRange(t = S.t) {
+  const endAll = S.plan.duration;
+  if (S.loop === 'cut') {
+    const cut = cutAround(t);
+    return cut ? { start: cut.start, end: cut.end } : { start: 0, end: endAll };
+  }
+  if (S.loop === 'line') {
+    const cut = cutAround(t);
+    if (!cut || cut.line < 0) return cut ? { start: cut.start, end: cut.end } : { start: 0, end: endAll };
+    const sameLine = S.plan.cuts.filter(item => item.line === cut.line && item.layout !== 'interlude' && item.layout !== 'title');
+    if (!sameLine.length) return { start: cut.start, end: cut.end };
+    return { start: sameLine[0].start, end: sameLine[sameLine.length - 1].end };
+  }
+  return { start: 0, end: endAll };
+}
+function refreshLoopHold(t) {
+  S.loopHold = S.loop === 'line' || S.loop === 'cut' ? loopRange(t == null ? S.t : t) : null;
+}
+function activeLoopRange() {
+  if (S.tap) return { start: 0, end: S.plan.duration };
+  if ((S.loop === 'line' || S.loop === 'cut') && S.loopHold) return S.loopHold;
+  return loopRange(S.t);
+}
+function syncLoopBtn() {
+  const button = $('btnLoop'); if (!button) return;
+  const mode = S.loop || 'off', copy = LOOP_COPY[mode] || LOOP_COPY.off;
+  button.textContent = copy.label;
+  button.title = copy.title;
+  button.setAttribute('aria-pressed', String(!!S.loop));
+  button.dataset.mode = mode;
+  refreshLoopHold();
+}
 
 /* WebAudio player (works inside sandboxed pages where blob media may be blocked) */
 const AP = {
@@ -105,6 +151,7 @@ function replan() {
   for (const [i, o] of Object.entries(S.project.overrides || {})) if (o && o.lock && !Array.isArray(o.lockedCuts)) { const snap = J.lineSnapshot(S.plan, +i); if (snap) o.lockedCuts = snap; }
   langNote();
   if (S.t > S.plan.duration) S.t = 0;
+  refreshLoopHold();
   renderLines(); sizeViewport(); drawTimeline(); updateTimeUI();
   S.need = true; autosave(); ensureFonts(); drawSwatch(); showNow();
   clearTimeout(warmTimer); warmTimer = setTimeout(warm, 450);
@@ -195,9 +242,10 @@ function tick(now) {
   if (S.playing) {
     // rAF timestamps can precede the moment play()/seek() stamped t0 → clamp so t never goes negative
     let t = Math.max(0, S.audio ? AP.time() : (now - S.t0) / 1000);
-    if (t >= S.plan.duration - 1e-3) {
-      if (S.loop && !S.tap) { seek(0); t = 0; }
-      else { pause(); t = S.plan.duration - 1e-3; if (S.tap) stopTap(); }
+    const range = activeLoopRange();
+    if (t >= range.end - 1e-3) {
+      if (S.loop && !S.tap) { seek(range.start); t = range.start; }
+      else { pause(); t = Math.min(t, S.plan.duration - 1e-3); if (S.tap) stopTap(); }
     }
     S.t = t; S.need = true;
   }
@@ -209,6 +257,7 @@ function updateTimeUI() {
   if (!S.scrubbing) $('scrub').value = String(Math.round(S.t / Math.max(0.001, S.plan.duration) * 10000));
 }
 function play() {
+  refreshLoopHold();
   if (S.audio) AP.play(S.audio.buffer, S.t);
   else S.t0 = performance.now() - S.t * 1000;
   S.playing = true; $('btnPlay').textContent = '❚❚'; $('btnPlay').setAttribute('aria-label', '一時停止');
@@ -221,6 +270,7 @@ function seek(t) {
   S.t = J.clamp(t, 0, Math.max(0, S.plan.duration - 1e-3));
   if (S.audio) { if (S.playing) AP.play(S.audio.buffer, S.t); }
   else S.t0 = performance.now() - S.t * 1000;
+  refreshLoopHold();
   S.need = true;
 }
 
@@ -285,6 +335,11 @@ function drawTimeline() {
   if (TL.z > 1) {                                          // where the view sits in the whole song
     x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(0, h - 2 * dpr, w, 2 * dpr);
     x.fillStyle = '#f5a50c'; x.fillRect(off / D * w, h - 2 * dpr, Math.max(4, vd / D * w), 2 * dpr);
+  }
+  if (S.loop === 'line' || S.loop === 'cut') {
+    const range = activeLoopRange();
+    x.fillStyle = 'rgba(245,165,12,0.16)';
+    x.fillRect(X(range.start), 0, Math.max(2 * dpr, X(range.end) - X(range.start)), h);
   }
   const px = X(S.t);
   x.fillStyle = '#f5a50c'; x.fillRect(Math.round(px) - dpr, 0, 2 * dpr, h);
@@ -1053,7 +1108,11 @@ function bind() {
   $('tapBtn').addEventListener('click', tapNow);
   $('tapStop').addEventListener('click', () => { pause(); stopTap(); });
   $('btnPlay').addEventListener('click', () => (S.playing ? pause() : play()));
-  $('btnLoop').addEventListener('click', e => { S.loop = !S.loop; e.target.setAttribute('aria-pressed', String(S.loop)); });
+  $('btnLoop').addEventListener('click', () => {
+    const i = LOOP_CYCLE.indexOf(S.loop);
+    S.loop = LOOP_CYCLE[(i + 1) % LOOP_CYCLE.length];
+    syncLoopBtn(); S.need = true;
+  });
   $('btnShuffle').addEventListener('click', () => { remember(); S.project.seed = (Math.random() * 1e9) | 0; $('seed').value = S.project.seed; replan(); commit(); });
   const sc = $('scrub');
   sc.addEventListener('input', () => { S.scrubbing = true; seek(sc.value / 10000 * S.plan.duration); });
@@ -1305,7 +1364,7 @@ async function restoreFonts() {
 /* ---------------- boot ---------------- */
 function boot() {
   S.project = loadLocal();
-  bind(); initVolume(); syncUI(); replan();
+  bind(); initVolume(); syncUI(); syncLoopBtn(); replan();
   restoreFonts();
   let mode = 'easy'; try { mode = localStorage.getItem('jizura.mode') || 'easy'; } catch (e) {}
   setMode(mode); commit();
