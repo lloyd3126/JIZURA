@@ -5,6 +5,7 @@ usage: python3 build.py            -> standalone edition pages for GitHub Pages
                                     -> set canonical / social URLs for this fork
 The root is Traditional Chinese; Japanese is published at /ja/."""
 import glob, os, sys
+import xml.etree.ElementTree as ET
 from app import i18n
 ROOT = os.path.dirname(os.path.abspath(__file__))
 os.chdir(ROOT)
@@ -65,10 +66,38 @@ def build(lang):
     os.makedirs(os.path.dirname(target) or '.', exist_ok=True)
     open(target, 'w', encoding='utf-8').write(html)
     print(target, len(html), 'bytes')
-for code, _, _, _ in i18n.EDITIONS:
+
+def write_sitemap(editions):
+    sitemap_ns = 'http://www.sitemaps.org/schemas/sitemap/0.9'
+    xhtml_ns = 'http://www.w3.org/1999/xhtml'
+    ET.register_namespace('', sitemap_ns)
+    ET.register_namespace('xhtml', xhtml_ns)
+
+    published = [
+        (html_lang, i18n.BASE + (folder + '/' if folder else ''))
+        for folder, html_lang in editions
+    ]
+    alternates = published + [('x-default', i18n.BASE)]
+    urlset = ET.Element(f'{{{sitemap_ns}}}urlset')
+    for folder, html_lang in editions:
+        url = ET.SubElement(urlset, f'{{{sitemap_ns}}}url')
+        location = i18n.BASE + (folder + '/' if folder else '')
+        ET.SubElement(url, f'{{{sitemap_ns}}}loc').text = location
+        for alternate_lang, href in alternates:
+            ET.SubElement(url, f'{{{xhtml_ns}}}link', {
+                'rel': 'alternate', 'hreflang': alternate_lang, 'href': href,
+            })
+
+    ET.ElementTree(urlset).write('sitemap.xml', encoding='utf-8', xml_declaration=True)
+    print('sitemap.xml', len(editions), 'urls')
+
+published_editions = []
+for code, folder, html_lang, _ in i18n.EDITIONS:
     if code in i18n.MODULES and not i18n.has_module(code):
         print('skip', code, '(no translation module yet)'); continue
     build(code)
+    published_editions.append((folder, html_lang))
+write_sitemap(published_editions)
 if '--dev' in sys.argv:
     os.makedirs('dev/www', exist_ok=True)
     open('dev/www/jizura.js', 'w', encoding='utf-8').write(js)
