@@ -88,6 +88,7 @@ def write_sitemap(editions):
                 'rel': 'alternate', 'hreflang': alternate_lang, 'href': href,
             })
 
+    ET.indent(urlset, space='  ')
     ET.ElementTree(urlset).write('sitemap.xml', encoding='utf-8', xml_declaration=True)
     print('sitemap.xml', len(editions), 'urls')
 
